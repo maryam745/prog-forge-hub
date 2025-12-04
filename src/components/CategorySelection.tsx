@@ -1,10 +1,11 @@
-import { ArrowLeft, Zap, Flame, Crown, Code2 } from 'lucide-react';
+import { ArrowLeft, Zap, Flame, Crown, Code2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CategorySelectionProps {
   language: 'python' | 'javascript' | 'cpp';
   completedLevels: (category: string) => number;
   onSelect: (category: 'basic' | 'intermediate' | 'advanced' | 'runcode') => void;
+  onGenerateQuiz: (category: 'basic' | 'intermediate' | 'advanced') => void;
   onBack: () => void;
 }
 
@@ -13,28 +14,28 @@ const categories = [
     id: 'basic' as const,
     name: 'Basic',
     icon: Zap,
-    color: 'from-green-400 to-emerald-500',
+    color: 'from-primary to-secondary',
     description: 'Start with fundamentals. Learn syntax, variables, and basic operations.',
   },
   {
     id: 'intermediate' as const,
     name: 'Intermediate',
     icon: Flame,
-    color: 'from-orange-400 to-amber-500',
+    color: 'from-secondary to-accent',
     description: 'Level up your skills. Functions, OOP, and more complex concepts.',
   },
   {
     id: 'advanced' as const,
     name: 'Advanced',
     icon: Crown,
-    color: 'from-purple-500 to-pink-500',
+    color: 'from-accent to-primary',
     description: 'Master advanced topics. Design patterns, optimization, and best practices.',
   },
   {
     id: 'runcode' as const,
     name: 'Run Your Own Code',
     icon: Code2,
-    color: 'from-blue-500 to-cyan-500',
+    color: 'from-primary to-accent',
     description: 'Practice freely. Write and run your own code in a sandbox environment.',
   },
 ];
@@ -49,6 +50,7 @@ const CategorySelection = ({
   language,
   completedLevels,
   onSelect,
+  onGenerateQuiz,
   onBack,
 }: CategorySelectionProps) => {
   return (
@@ -66,13 +68,13 @@ const CategorySelection = ({
             variant="ghost"
             size="icon"
             onClick={onBack}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-primary"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold">
-              <span className="gradient-text">{languageNames[language]}</span> Categories
+              <span className="gradient-text neon-text">{languageNames[language]}</span> Categories
             </h1>
             <p className="text-muted-foreground">Choose your difficulty level</p>
           </div>
@@ -86,44 +88,62 @@ const CategorySelection = ({
             const total = cat.id === 'runcode' ? 0 : 7;
 
             return (
-              <button
+              <div
                 key={cat.id}
-                onClick={() => onSelect(cat.id)}
-                className="glass-card p-6 text-left group hover:scale-[1.02] transition-all duration-300 animate-slide-up"
+                className="glass-card p-6 group hover:scale-[1.02] transition-all duration-300 animate-slide-up cyan-glow-hover"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div
-                    className={`w-16 h-16 rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
-                  >
-                    <Icon className="w-8 h-8 text-white" />
+                <button
+                  onClick={() => onSelect(cat.id)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className={`w-16 h-16 rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                    >
+                      <Icon className="w-8 h-8 text-background" />
+                    </div>
+                    {cat.id !== 'runcode' && (
+                      <div className="text-right">
+                        <span className="text-2xl font-bold text-primary">{completed}</span>
+                        <span className="text-muted-foreground">/{total}</span>
+                        <p className="text-xs text-muted-foreground">Levels</p>
+                      </div>
+                    )}
                   </div>
+
+                  <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
+                    {cat.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">{cat.description}</p>
+
                   {cat.id !== 'runcode' && (
-                    <div className="text-right">
-                      <span className="text-2xl font-bold">{completed}</span>
-                      <span className="text-muted-foreground">/{total}</span>
-                      <p className="text-xs text-muted-foreground">Levels</p>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${(completed / total) * 100}%`,
+                          background: 'var(--gradient-primary)',
+                        }}
+                      />
                     </div>
                   )}
-                </div>
+                </button>
 
-                <h3 className="text-xl font-bold mb-2 group-hover:gradient-text transition-colors">
-                  {cat.name}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">{cat.description}</p>
-
+                {/* Generate Quiz Button */}
                 {cat.id !== 'runcode' && (
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${(completed / total) * 100}%`,
-                        background: `linear-gradient(90deg, var(--primary), var(--accent))`,
-                      }}
-                    />
-                  </div>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onGenerateQuiz(cat.id);
+                    }}
+                    className="w-full mt-4 bg-gradient-to-r from-accent to-primary text-background gap-2 hover:opacity-90"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Generate AI Quiz (30 Questions)
+                  </Button>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>

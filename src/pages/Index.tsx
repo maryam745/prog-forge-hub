@@ -10,6 +10,7 @@ import LevelsScreen from '@/components/LevelsScreen';
 import QuestionScreen from '@/components/QuestionScreen';
 import RunCodeScreen from '@/components/RunCodeScreen';
 import SavedSessions from '@/components/SavedSessions';
+import QuizGenerator from '@/components/QuizGenerator';
 
 type Screen =
   | 'splash'
@@ -21,7 +22,8 @@ type Screen =
   | 'levels'
   | 'questions'
   | 'run-code'
-  | 'saved-sessions';
+  | 'saved-sessions'
+  | 'quiz';
 
 const Index = () => {
   const [screen, setScreen] = useState<Screen>('splash');
@@ -92,6 +94,11 @@ const Index = () => {
     }
   };
 
+  const handleGenerateQuiz = (cat: 'basic' | 'intermediate' | 'advanced') => {
+    setSelectedCategory(cat);
+    setScreen('quiz');
+  };
+
   const handleSelectLevel = (level: number) => {
     setSelectedLevel(level);
     setScreen('questions');
@@ -160,6 +167,7 @@ const Index = () => {
             language={selectedLanguage}
             completedLevels={(cat) => getCompletedLevels(selectedLanguage, cat)}
             onSelect={handleSelectCategory}
+            onGenerateQuiz={handleGenerateQuiz}
             onBack={() => setScreen('language-intro')}
           />
         );
@@ -185,6 +193,16 @@ const Index = () => {
             level={selectedLevel}
             onComplete={handleCompleteLevel}
             onBack={() => setScreen('levels')}
+          />
+        );
+
+      case 'quiz':
+        if (!selectedLanguage || !selectedCategory) return null;
+        return (
+          <QuizGenerator
+            language={selectedLanguage}
+            category={selectedCategory}
+            onBack={() => setScreen('category-selection')}
           />
         );
 
