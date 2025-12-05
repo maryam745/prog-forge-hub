@@ -6,51 +6,51 @@
 
 @layer base {
   :root {
-    /* Fresh Cream Light Theme */
-    --background: 40 100% 97%;
-    --foreground: 0 0% 20%;
+    /* Moderate Light-Dark Theme - Soft & Comfortable */
+    --background: 220 17% 90%;
+    --foreground: 0 0% 17%;
 
-    --card: 240 33% 95%;
-    --card-foreground: 0 0% 20%;
+    --card: 230 33% 97%;
+    --card-foreground: 0 0% 17%;
 
-    --popover: 240 33% 95%;
-    --popover-foreground: 0 0% 20%;
+    --popover: 230 33% 97%;
+    --popover-foreground: 0 0% 17%;
 
-    --primary: 207 67% 66%;
+    --primary: 244 100% 69%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 55% 59%;
+    --secondary: 244 56% 57%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 40 30% 94%;
-    --muted-foreground: 0 0% 33%;
+    --muted: 226 27% 87%;
+    --muted-foreground: 0 0% 35%;
 
-    --accent: 174 47% 65%;
-    --accent-foreground: 0 0% 20%;
+    --accent: 35 100% 64%;
+    --accent-foreground: 0 0% 17%;
 
-    --destructive: 0 76% 80%;
-    --destructive-foreground: 0 0% 20%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 142 50% 55%;
+    --success: 142 50% 45%;
     --success-foreground: 0 0% 100%;
 
-    --border: 240 20% 90%;
-    --input: 240 20% 90%;
-    --ring: 207 67% 66%;
+    --border: 224 33% 73%;
+    --input: 224 33% 73%;
+    --ring: 244 100% 69%;
 
     --radius: 0.75rem;
 
-    /* Custom gradients - Fresh Cream */
-    --gradient-primary: linear-gradient(135deg, hsl(207, 67%, 66%) 0%, hsl(174, 47%, 65%) 50%, hsl(0, 76%, 80%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(240, 33%, 97%) 0%, hsl(240, 33%, 93%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(207, 67%, 66%, 0.1) 0%, transparent 70%);
-    --gradient-hero: linear-gradient(180deg, hsl(40, 100%, 97%) 0%, hsl(40, 50%, 95%) 100%);
+    /* Custom gradients - Soft Professional */
+    --gradient-primary: linear-gradient(135deg, hsl(244, 100%, 69%) 0%, hsl(244, 56%, 57%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(230, 33%, 97%) 0%, hsl(226, 27%, 93%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(244, 100%, 69%, 0.1) 0%, transparent 70%);
+    --gradient-hero: linear-gradient(180deg, hsl(220, 17%, 90%) 0%, hsl(226, 27%, 87%) 100%);
 
-    /* Shadows - Soft Cream */
-    --shadow-glow: 0 4px 20px hsl(207, 67%, 66%, 0.2);
-    --shadow-card: 0 2px 12px hsl(240, 20%, 50%, 0.08);
-    --shadow-button: 0 4px 12px hsl(207, 67%, 66%, 0.3);
-    --shadow-cyan: 0 4px 16px hsl(174, 47%, 65%, 0.25);
+    /* Shadows - Soft Professional */
+    --shadow-glow: 0 4px 20px hsl(244, 100%, 69%, 0.2);
+    --shadow-card: 0 2px 12px hsl(224, 33%, 50%, 0.12);
+    --shadow-button: 0 4px 14px hsl(244, 100%, 69%, 0.3);
+    --shadow-cyan: 0 4px 16px hsl(244, 56%, 57%, 0.25);
 
     /* Fonts */
     --font-display: 'Space Grotesk', sans-serif;
@@ -117,8 +117,8 @@
   }
 
   .cyan-glow-hover:hover {
-    box-shadow: 0 6px 20px hsl(207, 67%, 66%, 0.25);
-    border-color: hsl(207, 67%, 66%);
+    box-shadow: 0 6px 20px hsl(244, 100%, 69%, 0.25);
+    border-color: hsl(244, 100%, 69%);
   }
 
   .code-editor {
@@ -127,7 +127,7 @@
   }
 
   .neon-text {
-    text-shadow: 0 2px 8px hsl(207, 67%, 66%, 0.25);
+    text-shadow: 0 2px 8px hsl(244, 100%, 69%, 0.25);
   }
 
   .hacker-card {
@@ -172,18 +172,18 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 2px 12px hsl(207, 67%, 66%, 0.15); }
-  50% { box-shadow: 0 4px 20px hsl(207, 67%, 66%, 0.3); }
+  0%, 100% { box-shadow: 0 2px 12px hsl(244, 100%, 69%, 0.15); }
+  50% { box-shadow: 0 4px 20px hsl(244, 100%, 69%, 0.28); }
 }
 
 @keyframes glow-pulse {
   0%, 100% { 
-    box-shadow: 0 2px 12px hsl(207, 67%, 66%, 0.15);
-    border-color: hsl(207, 67%, 66%, 0.3);
+    box-shadow: 0 2px 12px hsl(244, 100%, 69%, 0.15);
+    border-color: hsl(244, 100%, 69%, 0.3);
   }
   50% { 
-    box-shadow: 0 4px 20px hsl(207, 67%, 66%, 0.3);
-    border-color: hsl(207, 67%, 66%, 0.5);
+    box-shadow: 0 4px 20px hsl(244, 100%, 69%, 0.28);
+    border-color: hsl(244, 100%, 69%, 0.5);
   }
 }
 
@@ -202,7 +202,7 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-/* Scrollbar styling - Fresh Cream theme */
+/* Scrollbar styling - Soft Professional theme */
 ::-webkit-scrollbar {
   width: 8px;
 }
