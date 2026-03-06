@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Play, Lightbulb } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Play, Lightbulb, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { executeCode } from '@/services/judge0';
 import { Input } from '@/components/ui/input';
 import { getQuestions, Question, MCQ, ShortQuestion, CodingChallenge } from '@/data/questions';
 import { getChallenge, Challenge } from '@/data/challenges';
@@ -20,6 +21,8 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
   const [codeOutput, setCodeOutput] = useState<string>('');
   const [codeInput, setCodeInput] = useState<string>('');
   const [showHint, setShowHint] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   const questions = getQuestions(language, category, level);
   const currentQuestion = questions[currentIndex];
@@ -48,28 +51,15 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
     setAnswers({ ...answers, [currentIndex]: code });
   };
 
-  const runCode = () => {
+  const runCode = async () => {
     if (currentQuestion?.type !== 'coding') return;
-    
-    const challenge = getChallenge((currentQuestion as CodingChallenge).challengeId);
-    if (!challenge) return;
+    setIsRunning(true);
+    setIsError(false);
 
-    try {
-      // Simulate code execution for JavaScript
-      if (language === 'javascript') {
-        try {
-          const result = eval(`(function() { ${codeInput}; return typeof helloWorld === 'function' ? helloWorld() : 'Function not found'; })()`);
-          setCodeOutput(`Output: ${result}`);
-        } catch (e: any) {
-          setCodeOutput(`Error: ${e.message}`);
-        }
-      } else {
-        // For Python and C++, simulate the output
-        setCodeOutput(`Simulated output for ${language}:\n${challenge.testCases[0]?.expectedOutput || 'No output'}`);
-      }
-    } catch (e: any) {
-      setCodeOutput(`Error: ${e.message}`);
-    }
+    const result = await executeCode(codeInput, language);
+    setCodeOutput(result.output);
+    setIsError(result.isError);
+    setIsRunning(false);
   };
 
   const isAnswerCorrect = (index: number): boolean => {
@@ -257,9 +247,9 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
               <span className="text-sm text-muted-foreground font-mono">
                 {challenge.language}
               </span>
-              <Button size="sm" onClick={runCode} className="bg-green-600 hover:bg-green-700">
-                <Play className="w-4 h-4 mr-1" />
-                Run
+              <Button size="sm" onClick={runCode} disabled={isRunning} className="bg-green-600 hover:bg-green-700">
+                {isRunning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Play className="w-4 h-4 mr-1" />}
+                {isRunning ? 'Running...' : 'Run'}
               </Button>
             </div>
             <textarea
@@ -273,7 +263,7 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
           {codeOutput && (
             <div className="p-4 bg-card rounded-xl border border-border font-mono text-sm animate-fade-in">
               <p className="text-muted-foreground mb-2">Output:</p>
-              <p className="whitespace-pre-wrap">{codeOutput}</p>
+              <p className={`whitespace-pre-wrap ${isError ? 'text-destructive' : ''}`}>{codeOutput}</p>
             </div>
           )}
 

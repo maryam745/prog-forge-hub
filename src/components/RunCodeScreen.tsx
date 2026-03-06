@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ArrowLeft, Play, Save, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Play, Save, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { executeCode, LANGUAGE_IDS } from '@/services/judge0';
 
 interface RunCodeScreenProps {
   onSave: (language: string, code: string) => void;
@@ -32,6 +33,8 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
   const [language, setLanguage] = useState<'javascript' | 'python'>('javascript');
   const [code, setCode] = useState(starterCodes.javascript);
   const [output, setOutput] = useState('');
+  const [isRunning, setIsRunning] = useState(false);
+  const [isError, setIsError] = useState(false);
   const { toast } = useToast();
 
   const handleLanguageChange = (lang: 'javascript' | 'python') => {
@@ -40,39 +43,15 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
     setOutput('');
   };
 
-  const runCode = () => {
+  const runCode = async () => {
     setOutput('');
+    setIsRunning(true);
+    setIsError(false);
 
-    if (language === 'javascript') {
-      try {
-        // Capture console.log output
-        const logs: string[] = [];
-        const originalLog = console.log;
-        console.log = (...args) => {
-          logs.push(args.map(String).join(' '));
-        };
-
-        // Execute the code
-        eval(code);
-
-        // Restore console.log
-        console.log = originalLog;
-
-        setOutput(logs.join('\n') || 'Code executed successfully (no output)');
-      } catch (e: any) {
-        setOutput(`Error: ${e.message}`);
-      }
-    } else {
-      // Simulate Python output
-      const lines = code.split('\n');
-      const printStatements = lines.filter((line) => line.trim().startsWith('print'));
-      
-      if (printStatements.length > 0) {
-        setOutput('Simulated Python Output:\n' + printStatements.map(() => 'Hello, World!').join('\n'));
-      } else {
-        setOutput('Python simulation: Code parsed successfully!');
-      }
-    }
+    const result = await executeCode(code, language);
+    setOutput(result.output);
+    setIsError(result.isError);
+    setIsRunning(false);
   };
 
   const handleSave = () => {
@@ -171,9 +150,9 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
             <div className="p-3 bg-card border-b border-border flex items-center justify-between">
               <span className="text-sm font-medium">Output</span>
               <div className="flex gap-2">
-                <Button size="sm" onClick={runCode} className="bg-green-600 hover:bg-green-700">
-                  <Play className="w-4 h-4 mr-1" />
-                  Run
+                <Button size="sm" onClick={runCode} disabled={isRunning} className="bg-green-600 hover:bg-green-700">
+                  {isRunning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Play className="w-4 h-4 mr-1" />}
+                  {isRunning ? 'Running...' : 'Run'}
                 </Button>
                 <Button size="sm" variant="outline" onClick={handleSave}>
                   <Save className="w-4 h-4 mr-1" />
@@ -182,8 +161,13 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
               </div>
             </div>
             <div className="h-[400px] p-4 overflow-auto font-mono text-sm">
-              {output ? (
-                <pre className="whitespace-pre-wrap">{output}</pre>
+              {isRunning ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Executing code...
+                </div>
+              ) : output ? (
+                <pre className={`whitespace-pre-wrap ${isError ? 'text-destructive' : ''}`}>{output}</pre>
               ) : (
                 <p className="text-muted-foreground">
                   Click "Run" to execute your code...
