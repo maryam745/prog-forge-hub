@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Play, Lightbulb, Zap, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Play, Lightbulb, Zap, RotateCcw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getQuestions, Question, MCQ, ShortQuestion, CodingChallenge } from '@/data/questions';
 import { getChallenge } from '@/data/challenges';
+import { executeCode } from '@/services/judge0';
 
 interface QuizGeneratorProps {
   language: 'python' | 'javascript' | 'cpp';
@@ -20,6 +21,8 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
   const [codeInput, setCodeInput] = useState<string>('');
   const [showHint, setShowHint] = useState(false);
   const [isGenerating, setIsGenerating] = useState(true);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     generateQuiz();
@@ -87,26 +90,15 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
     setAnswers({ ...answers, [currentIndex]: code });
   };
 
-  const runCode = () => {
+  const runCode = async () => {
     if (currentQuestion?.type !== 'coding') return;
-    
-    const challenge = getChallenge((currentQuestion as CodingChallenge).challengeId);
-    if (!challenge) return;
+    setIsRunning(true);
+    setIsError(false);
 
-    try {
-      if (language === 'javascript') {
-        try {
-          const result = eval(`(function() { ${codeInput}; return typeof helloWorld === 'function' ? helloWorld() : 'Function not found'; })()`);
-          setCodeOutput(`Output: ${result}`);
-        } catch (e: any) {
-          setCodeOutput(`Error: ${e.message}`);
-        }
-      } else {
-        setCodeOutput(`Simulated output for ${language}:\n${challenge.testCases[0]?.expectedOutput || 'No output'}`);
-      }
-    } catch (e: any) {
-      setCodeOutput(`Error: ${e.message}`);
-    }
+    const result = await executeCode(codeInput, language);
+    setCodeOutput(result.output);
+    setIsError(result.isError);
+    setIsRunning(false);
   };
 
   const isAnswerCorrect = (index: number): boolean => {
@@ -305,9 +297,9 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
           <div className="hacker-card overflow-hidden">
             <div className="p-2 bg-muted border-b border-primary/30 flex items-center justify-between">
               <span className="text-sm text-primary font-mono">{challenge.language}</span>
-              <Button size="sm" onClick={runCode} className="bg-success hover:bg-success/80 text-background">
-                <Play className="w-4 h-4 mr-1" />
-                Run
+              <Button size="sm" onClick={runCode} disabled={isRunning} className="bg-success hover:bg-success/80 text-background">
+                {isRunning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Play className="w-4 h-4 mr-1" />}
+                {isRunning ? 'Running...' : 'Run'}
               </Button>
             </div>
             <textarea
@@ -321,7 +313,7 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
           {codeOutput && (
             <div className="p-4 hacker-card font-mono text-sm animate-fade-in">
               <p className="text-primary mb-2">Output:</p>
-              <p className="whitespace-pre-wrap">{codeOutput}</p>
+              <p className={`whitespace-pre-wrap ${isError ? 'text-destructive' : ''}`}>{codeOutput}</p>
             </div>
           )}
 
