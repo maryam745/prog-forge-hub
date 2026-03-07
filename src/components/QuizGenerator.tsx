@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Play, Lightbulb, Zap, RotateCcw, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Zap, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getQuestions, Question, MCQ, ShortQuestion, CodingChallenge } from '@/data/questions';
-import { getChallenge } from '@/data/challenges';
-import { executeCode } from '@/services/judge0';
+import { getQuestions, Question, MCQ, ShortQuestion } from '@/questions';
 
 interface QuizGeneratorProps {
   language: 'python' | 'javascript' | 'cpp';
@@ -17,12 +15,7 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | number>>({});
   const [showResult, setShowResult] = useState(false);
-  const [codeOutput, setCodeOutput] = useState<string>('');
-  const [codeInput, setCodeInput] = useState<string>('');
-  const [showHint, setShowHint] = useState(false);
   const [isGenerating, setIsGenerating] = useState(true);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     generateQuiz();
@@ -30,52 +23,33 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
 
   const generateQuiz = () => {
     setIsGenerating(true);
-    
-    // Collect all questions from all 7 levels
+
     const allMCQs: MCQ[] = [];
     const allShorts: ShortQuestion[] = [];
-    const allCodings: CodingChallenge[] = [];
 
     for (let level = 1; level <= 7; level++) {
       const levelQuestions = getQuestions(language, category, level);
       levelQuestions.forEach(q => {
         if (q.type === 'mcq') allMCQs.push(q as MCQ);
         else if (q.type === 'short') allShorts.push(q as ShortQuestion);
-        else if (q.type === 'coding') allCodings.push(q as CodingChallenge);
       });
     }
 
-    // Shuffle and pick 10 of each type
-    const shuffledMCQs = allMCQs.sort(() => Math.random() - 0.5).slice(0, 10);
-    const shuffledShorts = allShorts.sort(() => Math.random() - 0.5).slice(0, 10);
-    const shuffledCodings = allCodings.sort(() => Math.random() - 0.5).slice(0, 10);
+    const shuffledMCQs = allMCQs.sort(() => Math.random() - 0.5).slice(0, 15);
+    const shuffledShorts = allShorts.sort(() => Math.random() - 0.5).slice(0, 15);
 
-    // Combine and shuffle the final 30 questions
-    const combined = [...shuffledMCQs, ...shuffledShorts, ...shuffledCodings];
+    const combined = [...shuffledMCQs, ...shuffledShorts];
     const finalQuiz = combined.sort(() => Math.random() - 0.5);
 
     setQuizQuestions(finalQuiz);
     setCurrentIndex(0);
     setAnswers({});
     setShowResult(false);
-    setCodeOutput('');
-    setCodeInput('');
-    
+
     setTimeout(() => setIsGenerating(false), 1500);
   };
 
   const currentQuestion = quizQuestions[currentIndex];
-
-  useEffect(() => {
-    if (currentQuestion?.type === 'coding') {
-      const challenge = getChallenge((currentQuestion as CodingChallenge).challengeId);
-      if (challenge) {
-        setCodeInput(challenge.starterCode);
-      }
-    }
-    setShowHint(false);
-    setCodeOutput('');
-  }, [currentIndex, currentQuestion]);
 
   const handleMCQAnswer = (optionIndex: number) => {
     setAnswers({ ...answers, [currentIndex]: optionIndex });
@@ -83,22 +57,6 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
 
   const handleShortAnswer = (value: string) => {
     setAnswers({ ...answers, [currentIndex]: value });
-  };
-
-  const handleCodeChange = (code: string) => {
-    setCodeInput(code);
-    setAnswers({ ...answers, [currentIndex]: code });
-  };
-
-  const runCode = async () => {
-    if (currentQuestion?.type !== 'coding') return;
-    setIsRunning(true);
-    setIsError(false);
-
-    const result = await executeCode(codeInput, language);
-    setCodeOutput(result.output);
-    setIsError(result.isError);
-    setIsRunning(false);
   };
 
   const isAnswerCorrect = (index: number): boolean => {
@@ -112,8 +70,6 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
     } else if (q.type === 'short') {
       const correctAnswer = (q as ShortQuestion).answer.toLowerCase();
       return typeof answer === 'string' && answer.toLowerCase().includes(correctAnswer);
-    } else if (q.type === 'coding') {
-      return typeof answer === 'string' && answer.length > 20;
     }
     return false;
   };
@@ -148,7 +104,7 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
             <Zap className="w-12 h-12 text-background" />
           </div>
           <h2 className="text-2xl font-bold gradient-text mb-2">Generating AI Quiz...</h2>
-          <p className="text-muted-foreground">Creating 30 unique questions</p>
+          <p className="text-muted-foreground">Creating {quizQuestions.length || 30} unique questions</p>
         </div>
       </div>
     );
@@ -156,7 +112,8 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
 
   if (showResult) {
     const score = calculateScore();
-    const percentage = Math.round((score / 30) * 100);
+    const total = quizQuestions.length;
+    const percentage = Math.round((score / total) * 100);
     const passed = percentage >= 60;
 
     return (
@@ -183,7 +140,7 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
             </p>
 
             <div className="text-6xl font-bold gradient-text mb-2">
-              {score} / 30
+              {score} / {total}
             </div>
             <p className="text-xl text-muted-foreground mb-8">{percentage}% correct</p>
 
@@ -199,7 +156,6 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
             </div>
           </div>
 
-          {/* Wrong Answers Section */}
           <div className="glass-card p-6">
             <h3 className="text-xl font-bold mb-4 gradient-text">Review Your Answers</h3>
             <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
@@ -207,8 +163,8 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
                 <div
                   key={i}
                   className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${
-                    isAnswerCorrect(i) 
-                      ? 'bg-success/20 text-success border border-success/50' 
+                    isAnswerCorrect(i)
+                      ? 'bg-success/20 text-success border border-success/50'
                       : 'bg-destructive/20 text-destructive border border-destructive/50'
                   }`}
                 >
@@ -264,73 +220,6 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
       );
     }
 
-    if (currentQuestion.type === 'coding') {
-      const coding = currentQuestion as CodingChallenge;
-      const challenge = getChallenge(coding.challengeId);
-
-      if (!challenge) return <p>Challenge not found</p>;
-
-      return (
-        <div className="space-y-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-xl font-bold mb-2 text-primary">{challenge.title}</h3>
-              <p className="text-muted-foreground">{challenge.description}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowHint(!showHint)}
-              className="text-muted-foreground hover:text-primary"
-            >
-              <Lightbulb className="w-4 h-4 mr-1" />
-              Hint
-            </Button>
-          </div>
-
-          {showHint && (
-            <div className="p-3 bg-accent/10 rounded-lg text-sm text-accent animate-fade-in border border-accent/30">
-              💡 {challenge.hints[0]}
-            </div>
-          )}
-
-          <div className="hacker-card overflow-hidden">
-            <div className="p-2 bg-muted border-b border-primary/30 flex items-center justify-between">
-              <span className="text-sm text-primary font-mono">{challenge.language}</span>
-              <Button size="sm" onClick={runCode} disabled={isRunning} className="bg-success hover:bg-success/80 text-background">
-                {isRunning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Play className="w-4 h-4 mr-1" />}
-                {isRunning ? 'Running...' : 'Run'}
-              </Button>
-            </div>
-            <textarea
-              value={codeInput}
-              onChange={(e) => handleCodeChange(e.target.value)}
-              className="w-full h-48 p-4 bg-transparent font-mono text-sm resize-none focus:outline-none text-foreground"
-              spellCheck={false}
-            />
-          </div>
-
-          {codeOutput && (
-            <div className="p-4 hacker-card font-mono text-sm animate-fade-in">
-              <p className="text-primary mb-2">Output:</p>
-              <p className={`whitespace-pre-wrap ${isError ? 'text-destructive' : ''}`}>{codeOutput}</p>
-            </div>
-          )}
-
-          <div className="p-4 bg-muted/50 rounded-xl border border-primary/20">
-            <p className="text-sm text-primary mb-2">Test Cases:</p>
-            {challenge.testCases.map((tc, i) => (
-              <div key={i} className="text-sm font-mono">
-                <span className="text-muted-foreground">Input:</span> {tc.input || 'None'}
-                <span className="mx-2 text-primary">→</span>
-                <span className="text-success">{tc.expectedOutput}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
     return null;
   };
 
@@ -378,16 +267,10 @@ const QuizGenerator = ({ language, category, onBack }: QuizGeneratorProps) => {
             className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
               currentQuestion?.type === 'mcq'
                 ? 'bg-primary/20 text-primary'
-                : currentQuestion?.type === 'short'
-                ? 'bg-success/20 text-success'
-                : 'bg-accent/20 text-accent'
+                : 'bg-success/20 text-success'
             }`}
           >
-            {currentQuestion?.type === 'mcq'
-              ? 'Multiple Choice'
-              : currentQuestion?.type === 'short'
-              ? 'Short Answer'
-              : 'Coding Challenge'}
+            {currentQuestion?.type === 'mcq' ? 'Multiple Choice' : 'Short Answer'}
           </span>
         </div>
 
