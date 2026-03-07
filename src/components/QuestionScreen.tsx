@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Play, Lightbulb, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { executeCode } from '@/services/judge0';
 import { Input } from '@/components/ui/input';
-import { getQuestions, Question, MCQ, ShortQuestion, CodingChallenge } from '@/data/questions';
-import { getChallenge, Challenge } from '@/data/challenges';
+import { getQuestions, Question, MCQ, ShortQuestion } from '@/questions';
 
 interface QuestionScreenProps {
   language: 'python' | 'javascript' | 'cpp';
@@ -18,25 +16,9 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | number>>({});
   const [showResult, setShowResult] = useState(false);
-  const [codeOutput, setCodeOutput] = useState<string>('');
-  const [codeInput, setCodeInput] = useState<string>('');
-  const [showHint, setShowHint] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isError, setIsError] = useState(false);
 
   const questions = getQuestions(language, category, level);
   const currentQuestion = questions[currentIndex];
-
-  useEffect(() => {
-    if (currentQuestion?.type === 'coding') {
-      const challenge = getChallenge((currentQuestion as CodingChallenge).challengeId);
-      if (challenge) {
-        setCodeInput(challenge.starterCode);
-      }
-    }
-    setShowHint(false);
-    setCodeOutput('');
-  }, [currentIndex, currentQuestion]);
 
   const handleMCQAnswer = (optionIndex: number) => {
     setAnswers({ ...answers, [currentIndex]: optionIndex });
@@ -44,22 +26,6 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
 
   const handleShortAnswer = (value: string) => {
     setAnswers({ ...answers, [currentIndex]: value });
-  };
-
-  const handleCodeChange = (code: string) => {
-    setCodeInput(code);
-    setAnswers({ ...answers, [currentIndex]: code });
-  };
-
-  const runCode = async () => {
-    if (currentQuestion?.type !== 'coding') return;
-    setIsRunning(true);
-    setIsError(false);
-
-    const result = await executeCode(codeInput, language);
-    setCodeOutput(result.output);
-    setIsError(result.isError);
-    setIsRunning(false);
   };
 
   const isAnswerCorrect = (index: number): boolean => {
@@ -73,9 +39,6 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
     } else if (q.type === 'short') {
       const correctAnswer = (q as ShortQuestion).answer.toLowerCase();
       return typeof answer === 'string' && answer.toLowerCase().includes(correctAnswer);
-    } else if (q.type === 'coding') {
-      // For coding, check if code was submitted
-      return typeof answer === 'string' && answer.length > 20;
     }
     return false;
   };
@@ -120,32 +83,33 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
             }`}
           >
             {passed ? (
-              <CheckCircle className="w-12 h-12 text-white" />
+              <CheckCircle className="w-12 h-12 text-background" />
             ) : (
-              <XCircle className="w-12 h-12 text-white" />
+              <XCircle className="w-12 h-12 text-background" />
             )}
           </div>
 
-          <h2 className="text-3xl font-bold mb-2">
-            {passed ? 'Congratulations!' : 'Keep Practicing!'}
+          <h2 className="text-3xl font-bold mb-2 neon-text">
+            {passed ? 'Level Complete!' : 'Try Again!'}
           </h2>
-          <p className="text-muted-foreground mb-6">
-            {passed ? 'You passed this level!' : 'You need at least 6/10 to pass.'}
+          <p className="text-muted-foreground mb-4">
+            {passed
+              ? 'Great job! You passed this level.'
+              : 'You need at least 6 correct answers to pass.'}
           </p>
 
-          <div className="text-5xl font-bold gradient-text mb-8">
-            {score} / 10
+          <div className="text-5xl font-bold gradient-text mb-6">
+            {score} / {questions.length}
           </div>
 
-          <div className="space-y-3">
-            {questions.map((q, i) => (
+          <div className="grid grid-cols-5 gap-2 mb-6">
+            {questions.map((_, i) => (
               <div
                 key={i}
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  isAnswerCorrect(i) ? 'bg-green-500/10' : 'bg-red-500/10'
+                className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  isAnswerCorrect(i) ? 'bg-green-500/20' : 'bg-red-500/20'
                 }`}
               >
-                <span className="text-sm">Question {i + 1}</span>
                 {isAnswerCorrect(i) ? (
                   <CheckCircle className="w-5 h-5 text-green-400" />
                 ) : (
@@ -212,88 +176,17 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
       );
     }
 
-    if (currentQuestion.type === 'coding') {
-      const coding = currentQuestion as CodingChallenge;
-      const challenge = getChallenge(coding.challengeId);
-
-      if (!challenge) return <p>Challenge not found</p>;
-
-      return (
-        <div className="space-y-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-xl font-bold mb-2">{challenge.title}</h3>
-              <p className="text-muted-foreground">{challenge.description}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowHint(!showHint)}
-              className="text-muted-foreground"
-            >
-              <Lightbulb className="w-4 h-4 mr-1" />
-              Hint
-            </Button>
-          </div>
-
-          {showHint && (
-            <div className="p-3 bg-yellow-500/10 rounded-lg text-sm text-yellow-200 animate-fade-in">
-              💡 {challenge.hints[0]}
-            </div>
-          )}
-
-          <div className="bg-muted rounded-xl overflow-hidden">
-            <div className="p-2 bg-card border-b border-border flex items-center justify-between">
-              <span className="text-sm text-muted-foreground font-mono">
-                {challenge.language}
-              </span>
-              <Button size="sm" onClick={runCode} disabled={isRunning} className="bg-green-600 hover:bg-green-700">
-                {isRunning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Play className="w-4 h-4 mr-1" />}
-                {isRunning ? 'Running...' : 'Run'}
-              </Button>
-            </div>
-            <textarea
-              value={codeInput}
-              onChange={(e) => handleCodeChange(e.target.value)}
-              className="w-full h-48 p-4 bg-transparent font-mono text-sm resize-none focus:outline-none"
-              spellCheck={false}
-            />
-          </div>
-
-          {codeOutput && (
-            <div className="p-4 bg-card rounded-xl border border-border font-mono text-sm animate-fade-in">
-              <p className="text-muted-foreground mb-2">Output:</p>
-              <p className={`whitespace-pre-wrap ${isError ? 'text-destructive' : ''}`}>{codeOutput}</p>
-            </div>
-          )}
-
-          <div className="p-4 bg-muted/50 rounded-xl">
-            <p className="text-sm text-muted-foreground mb-2">Test Cases:</p>
-            {challenge.testCases.map((tc, i) => (
-              <div key={i} className="text-sm font-mono">
-                <span className="text-muted-foreground">Input:</span> {tc.input || 'None'}
-                <span className="mx-2">→</span>
-                <span className="text-green-400">{tc.expectedOutput}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
     return null;
   };
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-3xl mx-auto animate-slide-up">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <Button
             variant="ghost"
@@ -312,7 +205,6 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
           <div className="w-10" />
         </div>
 
-        {/* Progress */}
         <div className="h-2 bg-muted rounded-full mb-8 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-300"
@@ -323,29 +215,20 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
           />
         </div>
 
-        {/* Question Type Badge */}
         <div className="mb-4">
           <span
             className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
               currentQuestion?.type === 'mcq'
                 ? 'bg-blue-500/20 text-blue-300'
-                : currentQuestion?.type === 'short'
-                ? 'bg-green-500/20 text-green-300'
-                : 'bg-purple-500/20 text-purple-300'
+                : 'bg-green-500/20 text-green-300'
             }`}
           >
-            {currentQuestion?.type === 'mcq'
-              ? 'Multiple Choice'
-              : currentQuestion?.type === 'short'
-              ? 'Short Answer'
-              : 'Coding Challenge'}
+            {currentQuestion?.type === 'mcq' ? 'Multiple Choice' : 'Short Answer'}
           </span>
         </div>
 
-        {/* Question Content */}
         <div className="glass-card p-6 mb-6">{renderQuestion()}</div>
 
-        {/* Navigation */}
         <div className="flex justify-between">
           <Button
             variant="outline"
