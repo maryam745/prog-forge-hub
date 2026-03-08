@@ -119,27 +119,20 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
           </div>
 
           {/* Language Toggle */}
-          <div className="flex bg-muted rounded-xl p-1">
-            <button
-              onClick={() => handleLanguageChange('javascript')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                language === 'javascript'
-                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              JavaScript
-            </button>
-            <button
-              onClick={() => handleLanguageChange('python')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                language === 'python'
-                  ? 'bg-gradient-to-r from-blue-500 to-green-500 text-white'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Python
-            </button>
+          <div className="flex bg-muted rounded-xl p-1 flex-wrap gap-1">
+            {languages.map((lang) => (
+              <button
+                key={lang.id}
+                onClick={() => handleLanguageChange(lang.id)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  language === lang.id
+                    ? `bg-gradient-to-r ${lang.gradient} text-white`
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {lang.label}
+              </button>
+            ))}
           </div>
         </div>
 
