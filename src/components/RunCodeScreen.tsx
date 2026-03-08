@@ -55,11 +55,18 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
   const [isError, setIsError] = useState(false);
   const { toast } = useToast();
 
-  const handleLanguageChange = (lang: 'javascript' | 'python') => {
+  const handleLanguageChange = (lang: string) => {
     setLanguage(lang);
     setCode(starterCodes[lang]);
     setOutput('');
   };
+
+  const languages = [
+    { id: 'javascript', label: 'JavaScript', gradient: 'from-yellow-500 to-orange-500' },
+    { id: 'python', label: 'Python', gradient: 'from-blue-500 to-green-500' },
+    { id: 'cpp', label: 'C++', gradient: 'from-purple-500 to-indigo-500' },
+    { id: 'java', label: 'Java', gradient: 'from-red-500 to-orange-500' },
+  ];
 
   const runCode = async () => {
     setOutput('');
