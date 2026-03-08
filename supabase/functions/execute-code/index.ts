@@ -31,9 +31,13 @@ serve(async (req) => {
       );
     }
 
+    // Base64 encode the source code and stdin
+    const encodedSource = btoa(unescape(encodeURIComponent(source_code)));
+    const encodedStdin = btoa(unescape(encodeURIComponent(stdin || "")));
+
     // Submit code to Judge0
     const submitResponse = await fetch(
-      `${JUDGE0_URL}/submissions?base64_encoded=false&wait=true&fields=stdout,stderr,compile_output,status,time,memory`,
+      `${JUDGE0_URL}/submissions?base64_encoded=true&wait=true&fields=stdout,stderr,compile_output,status,time,memory`,
       {
         method: "POST",
         headers: {
@@ -42,9 +46,9 @@ serve(async (req) => {
           "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
         },
         body: JSON.stringify({
-          source_code,
+          source_code: encodedSource,
           language_id,
-          stdin: stdin || "",
+          stdin: encodedStdin,
         }),
       }
     );
@@ -59,6 +63,12 @@ serve(async (req) => {
     }
 
     const result = await submitResponse.json();
+
+    // Decode base64 fields
+    const decode = (s: string | null) => s ? decodeURIComponent(escape(atob(s))) : null;
+    result.stdout = decode(result.stdout);
+    result.stderr = decode(result.stderr);
+    result.compile_output = decode(result.compile_output);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
