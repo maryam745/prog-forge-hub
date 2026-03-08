@@ -9,7 +9,7 @@ interface RunCodeScreenProps {
   onBack: () => void;
 }
 
-const starterCodes = {
+const starterCodes: Record<string, string> = {
   javascript: `// JavaScript Playground
 // Write your code here!
 
@@ -19,7 +19,7 @@ function greet(name) {
 
 // Test your function
 console.log(greet("World"));`,
-  python: `# Python Playground (Simulated)
+  python: `# Python Playground
 # Write your code here!
 
 def greet(name):
@@ -27,21 +27,46 @@ def greet(name):
 
 # Test your function
 print(greet("World"))`,
+  cpp: `// C++ Playground
+// Write your code here!
+#include <iostream>
+using namespace std;
+
+int main() {
+    string name = "World";
+    cout << "Hello, " << name << "!" << endl;
+    return 0;
+}`,
+  java: `// Java Playground
+// Write your code here!
+public class Main {
+    public static void main(String[] args) {
+        String name = "World";
+        System.out.println("Hello, " + name + "!");
+    }
+}`,
 };
 
 const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
-  const [language, setLanguage] = useState<'javascript' | 'python'>('javascript');
+  const [language, setLanguage] = useState('javascript');
   const [code, setCode] = useState(starterCodes.javascript);
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isError, setIsError] = useState(false);
   const { toast } = useToast();
 
-  const handleLanguageChange = (lang: 'javascript' | 'python') => {
+  const handleLanguageChange = (lang: string) => {
     setLanguage(lang);
     setCode(starterCodes[lang]);
     setOutput('');
   };
+
+  const languages = [
+    { id: 'javascript', label: 'JavaScript', gradient: 'from-yellow-500 to-orange-500' },
+    { id: 'python', label: 'Python', gradient: 'from-blue-500 to-green-500' },
+    { id: 'cpp', label: 'C++', gradient: 'from-purple-500 to-indigo-500' },
+    { id: 'java', label: 'Java', gradient: 'from-red-500 to-orange-500' },
+  ];
 
   const runCode = async () => {
     setOutput('');
@@ -94,27 +119,20 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
           </div>
 
           {/* Language Toggle */}
-          <div className="flex bg-muted rounded-xl p-1">
-            <button
-              onClick={() => handleLanguageChange('javascript')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                language === 'javascript'
-                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              JavaScript
-            </button>
-            <button
-              onClick={() => handleLanguageChange('python')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                language === 'python'
-                  ? 'bg-gradient-to-r from-blue-500 to-green-500 text-white'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Python
-            </button>
+          <div className="flex bg-muted rounded-xl p-1 flex-wrap gap-1">
+            {languages.map((lang) => (
+              <button
+                key={lang.id}
+                onClick={() => handleLanguageChange(lang.id)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  language === lang.id
+                    ? `bg-gradient-to-r ${lang.gradient} text-white`
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {lang.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -129,7 +147,7 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
                 <span className="w-3 h-3 rounded-full bg-green-500" />
               </div>
               <span className="text-sm text-muted-foreground font-mono">
-                {language === 'javascript' ? 'script.js' : 'main.py'}
+                {language === 'javascript' ? 'script.js' : language === 'python' ? 'main.py' : language === 'cpp' ? 'main.cpp' : 'Main.java'}
               </span>
             </div>
             <textarea
@@ -180,10 +198,10 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
             <span className="font-medium">Tips</span>
           </div>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• JavaScript runs natively in your browser</li>
-            <li>• Python execution is simulated for demonstration</li>
+            <li>• All 4 languages are supported: JavaScript, Python, C++, Java</li>
+            <li>• Code runs on a real server via Judge0 API</li>
             <li>• Save your sessions to review them later</li>
-            <li>• Use console.log() in JavaScript or print() in Python to see output</li>
+            <li>• Use console.log(), print(), cout, or System.out.println() for output</li>
           </ul>
         </div>
       </div>
