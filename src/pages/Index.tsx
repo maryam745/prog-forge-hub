@@ -109,7 +109,15 @@ const Index = () => {
         return <LanguageSelection onSelect={handleSelectLanguage} onBack={() => setScreen('dashboard')} />;
       case 'language-intro':
         if (!selectedLanguage) return null;
-        return <LanguageIntro language={selectedLanguage} onStart={handleStartLanguage} onBack={() => setScreen('language-selection')} />;
+        return (
+          <LanguageIntro
+            language={selectedLanguage}
+            progress={progress}
+            getCompletedLevels={getCompletedLevels}
+            onStart={handleStartLanguage}
+            onBack={() => setScreen('language-selection')}
+          />
+        );
       case 'menu':
         if (!selectedLanguage) return null;
         return (
