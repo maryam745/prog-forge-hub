@@ -7,9 +7,10 @@ interface AIQuizScreenProps {
   questions: any[];
   language: 'python' | 'javascript' | 'cpp';
   onBack: () => void;
+  onQuizComplete?: (score: number) => void;
 }
 
-const AIQuizScreen = ({ questions, language, onBack }: AIQuizScreenProps) => {
+const AIQuizScreen = ({ questions, language, onBack, onQuizComplete }: AIQuizScreenProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | number>>({});
   const [showResult, setShowResult] = useState(false);
