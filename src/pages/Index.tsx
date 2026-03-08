@@ -39,7 +39,7 @@ const Index = () => {
 
   const {
     currentUser, progress, users, savedSessions,
-    loadUser, createUser, completeLevel, getLevelProgress,
+    loadUser, createUser, completeLevel, addQuizPoints, getLevelProgress,
     getCompletedLevels, getTotalCompletedLevels, saveSession, deleteSession, logout,
   } = useProgress();
 
