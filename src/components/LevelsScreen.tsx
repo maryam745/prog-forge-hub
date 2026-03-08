@@ -202,7 +202,7 @@ const LevelsScreen = ({
             <h1 className="text-3xl md:text-4xl font-bold">
               {languageNames[language]} - <span className="gradient-text">{categoryNames[category]}</span>
             </h1>
-            <p className="text-muted-foreground">Complete all 7 levels to master this category</p>
+            <p className="text-muted-foreground">Complete all {topics.length} levels to master this category</p>
           </div>
         </div>
 
