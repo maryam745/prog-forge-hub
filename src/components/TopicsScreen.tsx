@@ -17,19 +17,19 @@ const languageNames = {
 
 const topicsByLanguage: Record<string, { category: string; topics: string[] }[]> = {
   python: [
-    { category: 'Basic', topics: ['Variables & Data Types', 'Operators', 'Strings', 'Lists & Tuples', 'Dictionaries', 'Control Flow', 'Loops'] },
-    { category: 'Intermediate', topics: ['Functions', 'Modules & Packages', 'File Handling', 'Exception Handling', 'OOP Basics', 'Inheritance', 'Decorators'] },
-    { category: 'Advanced', topics: ['Generators & Iterators', 'Async/Await', 'Metaclasses', 'Context Managers', 'Threading', 'Design Patterns', 'Testing'] },
+    { category: 'Basic', topics: ['Input & Output', 'Variables & Data Types', 'Type Casting', 'Operators', 'Strings', 'Lists', 'Tuples', 'Dictionaries', 'Sets', 'Conditionals', 'Loops'] },
+    { category: 'Intermediate', topics: ['Functions', 'Lambda & Map/Filter', 'Recursion', 'Modules & Packages', 'File Handling', 'Exception Handling', 'OOP Basics', 'Inheritance', 'Polymorphism', 'Regular Expressions'] },
+    { category: 'Advanced', topics: ['Decorators', 'Generators & Iterators', 'Context Managers', 'Async/Await', 'Threading', 'Metaclasses', 'Design Patterns', 'Unit Testing'] },
   ],
   javascript: [
-    { category: 'Basic', topics: ['Variables & Scope', 'Data Types', 'Operators', 'Strings & Arrays', 'Objects', 'DOM Manipulation', 'Events'] },
-    { category: 'Intermediate', topics: ['Functions & Closures', 'Callbacks', 'Promises', 'Async/Await', 'Classes', 'Modules', 'Error Handling'] },
-    { category: 'Advanced', topics: ['Prototypes', 'Event Loop', 'Web APIs', 'Performance', 'Testing', 'Design Patterns', 'TypeScript Basics'] },
+    { category: 'Basic', topics: ['Console & Output', 'Variables & Scope', 'Data Types & Coercion', 'Operators', 'Strings', 'Arrays', 'Objects', 'Conditionals', 'Loops', 'DOM Basics'] },
+    { category: 'Intermediate', topics: ['Functions & Closures', 'Arrow Functions', 'Callbacks', 'Promises', 'Async/Await', 'Classes', 'Modules', 'Array Methods', 'JSON & Fetch', 'Error Handling'] },
+    { category: 'Advanced', topics: ['Prototypes', 'Event Loop', 'Generators', 'Proxy & Reflect', 'Web APIs', 'Web Workers', 'Performance', 'Testing', 'Design Patterns', 'TypeScript'] },
   ],
   cpp: [
-    { category: 'Basic', topics: ['Variables & Types', 'Operators', 'Arrays', 'Strings', 'Pointers', 'References', 'Control Flow'] },
-    { category: 'Intermediate', topics: ['Functions', 'Classes & Objects', 'Inheritance', 'Polymorphism', 'Templates', 'STL Containers', 'File I/O'] },
-    { category: 'Advanced', topics: ['Smart Pointers', 'Move Semantics', 'Multithreading', 'Lambdas', 'Template Metaprogramming', 'Memory Management', 'Design Patterns'] },
+    { category: 'Basic', topics: ['Input & Output', 'Variables & Data Types', 'Type Casting', 'Operators', 'Strings', 'Arrays', 'Pointers', 'References', 'Conditionals', 'Loops'] },
+    { category: 'Intermediate', topics: ['Functions', 'Recursion', 'Structures & Enums', 'Classes & Objects', 'Inheritance', 'Polymorphism', 'Templates', 'STL Containers', 'File I/O', 'Exception Handling'] },
+    { category: 'Advanced', topics: ['Smart Pointers', 'Move Semantics', 'Lambdas', 'Multithreading', 'Template Metaprogramming', 'Memory Management', 'Design Patterns', 'Unit Testing'] },
   ],
 };
 
