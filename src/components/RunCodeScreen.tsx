@@ -48,7 +48,7 @@ public class Main {
 };
 
 const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
-  const [language, setLanguage] = useState<'javascript' | 'python'>('javascript');
+  const [language, setLanguage] = useState('javascript');
   const [code, setCode] = useState(starterCodes.javascript);
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
