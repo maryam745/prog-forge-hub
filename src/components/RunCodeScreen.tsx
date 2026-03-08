@@ -9,7 +9,7 @@ interface RunCodeScreenProps {
   onBack: () => void;
 }
 
-const starterCodes = {
+const starterCodes: Record<string, string> = {
   javascript: `// JavaScript Playground
 // Write your code here!
 
@@ -19,7 +19,7 @@ function greet(name) {
 
 // Test your function
 console.log(greet("World"));`,
-  python: `# Python Playground (Simulated)
+  python: `# Python Playground
 # Write your code here!
 
 def greet(name):
@@ -27,6 +27,24 @@ def greet(name):
 
 # Test your function
 print(greet("World"))`,
+  cpp: `// C++ Playground
+// Write your code here!
+#include <iostream>
+using namespace std;
+
+int main() {
+    string name = "World";
+    cout << "Hello, " << name << "!" << endl;
+    return 0;
+}`,
+  java: `// Java Playground
+// Write your code here!
+public class Main {
+    public static void main(String[] args) {
+        String name = "World";
+        System.out.println("Hello, " + name + "!");
+    }
+}`,
 };
 
 const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
