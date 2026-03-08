@@ -51,7 +51,6 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
   const [code, setCode] = useState(starterCodes.javascript);
   const [stdin, setStdin] = useState('');
   const [output, setOutput] = useState('');
-  const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isError, setIsError] = useState(false);
   const { toast } = useToast();
