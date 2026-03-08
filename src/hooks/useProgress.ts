@@ -185,6 +185,7 @@ export const useProgress = () => {
     loadUser,
     createUser,
     completeLevel,
+    addQuizPoints,
     getLevelProgress,
     getCompletedLevels,
     getTotalCompletedLevels,
