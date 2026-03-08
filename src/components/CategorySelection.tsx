@@ -51,9 +51,9 @@ const CategorySelection = ({ language, completedLevels, onSelect, onGenerateQuiz
 
       <div className="relative z-10 max-w-4xl mx-auto animate-slide-up">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="icon" onClick={onBack} className="text-muted-foreground hover:text-primary">
+          <button onClick={onBack} className="back-button">
             <ArrowLeft className="w-5 h-5" />
-          </Button>
+          </button>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold">
               <span className="gradient-text neon-text">{languageNames[language]}</span> Categories

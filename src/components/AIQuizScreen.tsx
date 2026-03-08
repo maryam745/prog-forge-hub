@@ -202,9 +202,9 @@ const AIQuizScreen = ({ questions, onBack }: AIQuizScreenProps) => {
 
       <div className="relative z-10 max-w-3xl mx-auto animate-slide-up">
         <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" size="icon" onClick={onBack} className="text-muted-foreground hover:text-primary">
+          <button onClick={onBack} className="back-button">
             <ArrowLeft className="w-5 h-5" />
-          </Button>
+          </button>
           <div className="text-center">
             <p className="text-sm text-primary font-medium flex items-center gap-2">
               <Zap className="w-4 h-4" /> AI Generated Quiz

@@ -130,6 +130,15 @@
     text-shadow: 0 0 10px hsl(187, 100%, 50%, 0.8), 0 0 20px hsl(187, 100%, 50%, 0.5);
   }
 
+  .back-button {
+    @apply w-10 h-10 rounded-xl bg-card border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-background transition-all duration-200;
+    box-shadow: 0 0 12px hsl(187, 100%, 50%, 0.15);
+  }
+
+  .back-button:hover {
+    box-shadow: 0 0 20px hsl(187, 100%, 50%, 0.4);
+  }
+
   .hacker-card {
     @apply bg-card border border-primary/30 rounded-xl;
     box-shadow: 0 0 20px hsl(187, 100%, 50%, 0.15), inset 0 1px 0 hsl(187, 100%, 50%, 0.1);
