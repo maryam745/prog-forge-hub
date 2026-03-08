@@ -33,6 +33,8 @@ const defaultProgress = (name: string): UserProgress => ({
     cpp: { basic: {}, intermediate: {}, advanced: {} },
   },
   totalPoints: 0,
+  quizPoints: 0,
+  quizzesCompleted: 0,
 });
 
 export const useProgress = () => {
