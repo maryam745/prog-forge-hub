@@ -118,6 +118,17 @@ export const useProgress = () => {
     saveProgress(updatedProgress);
   };
 
+  const addQuizPoints = (score: number) => {
+    if (!progress) return;
+    const updatedProgress = {
+      ...progress,
+      totalPoints: progress.totalPoints + score,
+      quizPoints: (progress.quizPoints || 0) + score,
+      quizzesCompleted: (progress.quizzesCompleted || 0) + 1,
+    };
+    saveProgress(updatedProgress);
+  };
+
   const getLevelProgress = (language: string, category: string, level: number) => {
     if (!progress) return null;
     return progress.languages[language]?.[category]?.[level] || null;
