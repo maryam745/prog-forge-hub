@@ -128,7 +128,6 @@ const Index = () => {
             language={selectedLanguage}
             completedLevels={(cat) => getCompletedLevels(selectedLanguage, cat)}
             onSelect={handleSelectCategory}
-            onGenerateQuiz={handleGenerateCategoryQuiz}
             onBack={() => setScreen('menu')}
           />
         );
