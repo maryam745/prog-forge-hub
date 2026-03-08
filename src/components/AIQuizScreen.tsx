@@ -74,6 +74,8 @@ const AIQuizScreen = ({ questions, language, onBack, onQuizComplete }: AIQuizScr
       setCurrentIndex(currentIndex + 1);
     } else {
       setShowResult(true);
+      const score = calculateScore();
+      onQuizComplete?.(score);
     }
   };
 
