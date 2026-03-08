@@ -138,7 +138,7 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
                 <span className="w-3 h-3 rounded-full bg-green-500" />
               </div>
               <span className="text-sm text-muted-foreground font-mono">
-                {language === 'javascript' ? 'script.js' : language === 'python' ? 'main.py' : language === 'cpp' ? 'main.cpp' : 'Main.java'}
+                {language === 'javascript' ? 'script.js' : language === 'python' ? 'main.py' : 'main.cpp'}
               </span>
             </div>
             <textarea
