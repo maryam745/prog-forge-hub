@@ -188,14 +188,9 @@ const QuestionScreen = ({ language, category, level, onComplete, onBack }: Quest
 
       <div className="relative z-10 max-w-3xl mx-auto animate-slide-up">
         <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="text-muted-foreground hover:text-foreground"
-          >
+          <button onClick={onBack} className="back-button">
             <ArrowLeft className="w-5 h-5" />
-          </Button>
+          </button>
           <div className="text-center">
             <p className="text-sm text-muted-foreground">Level {level}</p>
             <p className="font-medium">
