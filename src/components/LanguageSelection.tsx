@@ -43,7 +43,8 @@ const LanguageSelection = ({ onSelect, onBack }: LanguageSelectionProps) => {
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button onClick={onBack} className="back-button">
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
+            Back
           </button>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold">Choose a Language</h1>

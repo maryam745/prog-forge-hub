@@ -131,12 +131,12 @@
   }
 
   .back-button {
-    @apply w-10 h-10 rounded-xl bg-card border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-background transition-all duration-200;
-    box-shadow: 0 0 12px hsl(187, 100%, 50%, 0.15);
+    @apply h-10 px-3 rounded-xl bg-primary/15 border border-primary/40 flex items-center gap-2 text-primary text-sm font-medium hover:bg-primary/25 hover:border-primary transition-all duration-200;
+    box-shadow: 0 0 10px hsl(187, 100%, 50%, 0.12);
   }
 
   .back-button:hover {
-    box-shadow: 0 0 20px hsl(187, 100%, 50%, 0.4);
+    box-shadow: 0 0 18px hsl(187, 100%, 50%, 0.3);
   }
 
   .hacker-card {
