@@ -19,7 +19,7 @@ const Dashboard = ({
   onViewSessions,
   onLogout,
 }: DashboardProps) => {
-  const totalLevels = 63; // 3 languages × 3 categories × 7 levels
+  const totalLevels = 126; // 3 languages × (15 basic + 15 intermediate + 12 advanced)
   const percentage = Math.round((completedLevels / totalLevels) * 100);
 
   return (
