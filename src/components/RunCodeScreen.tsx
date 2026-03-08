@@ -189,10 +189,10 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
             <span className="font-medium">Tips</span>
           </div>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• All 4 languages are supported: JavaScript, Python, C++, Java</li>
+            <li>• JavaScript, Python aur C++ supported hain</li>
             <li>• Code runs on a real server via Judge0 API</li>
             <li>• Save your sessions to review them later</li>
-            <li>• Use console.log(), print(), cout, or System.out.println() for output</li>
+            <li>• Use console.log(), print(), or cout for output</li>
           </ul>
         </div>
       </div>
