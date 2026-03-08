@@ -229,3 +229,12 @@ export const challenges: Challenge[] = [
 export const getChallenge = (id: string): Challenge | undefined => {
   return challenges.find((c) => c.id === id);
 };
+
+export const getChallengesForLevel = (
+  language: 'python' | 'javascript' | 'cpp',
+  category: 'basic' | 'intermediate' | 'advanced',
+  level: number
+): Challenge[] => {
+  const prefix = `${language}_${category}_${level}_`;
+  return challenges.filter((c) => c.id.startsWith(prefix));
+};
