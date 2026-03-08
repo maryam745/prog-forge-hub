@@ -1,11 +1,9 @@
 import { ArrowLeft, Zap, Flame, Crown } from 'lucide-react';
 
-
 interface CategorySelectionProps {
   language: 'python' | 'javascript' | 'cpp';
   completedLevels: (category: string) => number;
   onSelect: (category: 'basic' | 'intermediate' | 'advanced' | 'runcode') => void;
-  onGenerateQuiz: (questions: any[]) => void;
   onBack: () => void;
 }
 
@@ -17,29 +15,7 @@ const categories = [
 
 const languageNames = { python: 'Python', javascript: 'JavaScript', cpp: 'C++' };
 
-const CategorySelection = ({ language, completedLevels, onSelect, onGenerateQuiz, onBack }: CategorySelectionProps) => {
-  const [generatingCategory, setGeneratingCategory] = useState<string | null>(null);
-
-  const handleGenerateQuiz = async (catId: 'basic' | 'intermediate' | 'advanced') => {
-    setGeneratingCategory(catId);
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-quiz', {
-        body: { language: languageNames[language], category: catId, count: 30 },
-      });
-      if (error) throw error;
-      if (data?.questions && Array.isArray(data.questions)) {
-        onGenerateQuiz(data.questions);
-      } else {
-        throw new Error('Invalid response');
-      }
-    } catch (err) {
-      console.error('Quiz generation failed:', err);
-      alert('Failed to generate quiz. Please try again.');
-    } finally {
-      setGeneratingCategory(null);
-    }
-  };
-
+const CategorySelection = ({ language, completedLevels, onSelect, onBack }: CategorySelectionProps) => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -90,7 +66,6 @@ const CategorySelection = ({ language, completedLevels, onSelect, onGenerateQuiz
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(completed / total) * 100}%`, background: 'var(--gradient-primary)' }} />
                   </div>
                 </button>
-
               </div>
             );
           })}
