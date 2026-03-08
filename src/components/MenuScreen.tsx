@@ -54,7 +54,7 @@ const MenuScreen = ({ language, onLevels, onRunCode, onQuiz, onBack }: MenuScree
             className="back-button"
           >
             <ArrowLeft className="w-5 h-5" />
-          </Button>
+          </button>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold">
               <span className="gradient-text neon-text">{languageNames[language]}</span>

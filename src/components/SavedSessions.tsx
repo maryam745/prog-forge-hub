@@ -31,14 +31,9 @@ const SavedSessions = ({ sessions, onDelete, onBack }: SavedSessionsProps) => {
       <div className="relative z-10 max-w-4xl mx-auto animate-slide-up">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+            <button onClick={onBack} className="back-button">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold">Saved Sessions</h1>
             <p className="text-muted-foreground">
