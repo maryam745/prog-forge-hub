@@ -37,14 +37,6 @@ int main() {
     cout << "Hello, " << name << "!" << endl;
     return 0;
 }`,
-  java: `// Java Playground
-// Write your code here!
-public class Main {
-    public static void main(String[] args) {
-        String name = "World";
-        System.out.println("Hello, " + name + "!");
-    }
-}`,
 };
 
 const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
@@ -65,7 +57,6 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
     { id: 'javascript', label: 'JavaScript', gradient: 'from-yellow-500 to-orange-500' },
     { id: 'python', label: 'Python', gradient: 'from-blue-500 to-green-500' },
     { id: 'cpp', label: 'C++', gradient: 'from-purple-500 to-indigo-500' },
-    { id: 'java', label: 'Java', gradient: 'from-red-500 to-orange-500' },
   ];
 
   const runCode = async () => {
@@ -147,7 +138,7 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
                 <span className="w-3 h-3 rounded-full bg-green-500" />
               </div>
               <span className="text-sm text-muted-foreground font-mono">
-                {language === 'javascript' ? 'script.js' : language === 'python' ? 'main.py' : language === 'cpp' ? 'main.cpp' : 'Main.java'}
+                {language === 'javascript' ? 'script.js' : language === 'python' ? 'main.py' : 'main.cpp'}
               </span>
             </div>
             <textarea
@@ -198,10 +189,10 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
             <span className="font-medium">Tips</span>
           </div>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• All 4 languages are supported: JavaScript, Python, C++, Java</li>
+            <li>• JavaScript, Python aur C++ supported hain</li>
             <li>• Code runs on a real server via Judge0 API</li>
             <li>• Save your sessions to review them later</li>
-            <li>• Use console.log(), print(), cout, or System.out.println() for output</li>
+            <li>• Use console.log(), print(), or cout for output</li>
           </ul>
         </div>
       </div>
