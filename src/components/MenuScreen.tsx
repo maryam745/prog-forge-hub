@@ -49,11 +49,9 @@ const MenuScreen = ({ language, onLevels, onRunCode, onQuiz, onBack }: MenuScree
 
       <div className="relative z-10 max-w-4xl mx-auto animate-slide-up">
         <div className="flex items-center gap-4 mb-12">
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={onBack}
-            className="text-muted-foreground hover:text-primary"
+            className="back-button"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
