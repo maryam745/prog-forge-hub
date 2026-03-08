@@ -93,18 +93,6 @@ const CategorySelection = ({ language, completedLevels, onSelect, onGenerateQuiz
                   </div>
                 </button>
 
-                <Button
-                  onClick={(e) => { e.stopPropagation(); handleGenerateQuiz(cat.id); }}
-                  disabled={generatingCategory !== null}
-                  className="w-full mt-4 bg-gradient-to-r from-accent to-primary text-background gap-2 hover:opacity-90"
-                >
-                  {generatingCategory === cat.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4" />
-                  )}
-                  {generatingCategory === cat.id ? 'Generating...' : 'Generate AI Quiz (30 Questions)'}
-                </Button>
               </div>
             );
           })}
