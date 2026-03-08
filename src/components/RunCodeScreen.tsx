@@ -50,6 +50,7 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
   const [language, setLanguage] = useState('javascript');
   const [code, setCode] = useState(starterCodes.javascript);
   const [stdin, setStdin] = useState('');
+  const [showInput, setShowInput] = useState(true);
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -168,54 +169,65 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
             />
           </div>
 
-          {/* Console Panel */}
-          <div className="glass-card overflow-hidden flex flex-col">
-            <div className="p-3 bg-card border-b border-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Console</span>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={runCode} disabled={isRunning} className="bg-green-600 hover:bg-green-700">
-                  {isRunning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Play className="w-4 h-4 mr-1" />}
-                  {isRunning ? 'Running...' : 'Run'}
-                </Button>
-                <Button size="sm" variant="outline" onClick={handleSave}>
-                  <Save className="w-4 h-4 mr-1" />
-                  Save
-                </Button>
-              </div>
-            </div>
-
-            {/* Output Area */}
-            <div className="h-[280px] p-4 overflow-auto font-mono text-sm border-b border-border">
-              {isRunning ? (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Executing code...
+          {/* Output + Input */}
+          <div className="flex flex-col gap-4">
+            {/* Stdin Input */}
+            <div className="glass-card overflow-hidden">
+              <button
+                onClick={() => setShowInput(!showInput)}
+                className="w-full p-3 bg-card border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Keyboard className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">User Input (stdin)</span>
                 </div>
-              ) : output ? (
-                <pre className={`whitespace-pre-wrap ${isError ? 'text-destructive' : ''}`}>{output}</pre>
-              ) : (
-                <p className="text-muted-foreground">
-                  Click "Run" to execute your code...
-                </p>
+                <span className="text-xs text-muted-foreground">
+                  {showInput ? 'Click to hide' : 'Click to add input'}
+                </span>
+              </button>
+              {showInput && (
+                <textarea
+                  value={stdin}
+                  onChange={(e) => setStdin(e.target.value)}
+                  className="w-full h-[100px] p-3 bg-transparent font-mono text-sm resize-none focus:outline-none placeholder:text-muted-foreground"
+                  spellCheck={false}
+                  placeholder="Enter input values here (each on a new line)...&#10;Example:&#10;5&#10;Hello"
+                />
               )}
             </div>
 
-            {/* Stdin Input - integrated in console */}
-            <div className="bg-muted/30">
-              <div className="px-4 pt-2 flex items-center gap-2">
-                <Keyboard className="w-3.5 h-3.5 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground">Input (stdin) — provide input before running</span>
+            {/* Output */}
+            <div className="glass-card overflow-hidden flex-1">
+              <div className="p-3 bg-card border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Output</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={runCode} disabled={isRunning} className="bg-green-600 hover:bg-green-700">
+                    {isRunning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Play className="w-4 h-4 mr-1" />}
+                    {isRunning ? 'Running...' : 'Run'}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleSave}>
+                    <Save className="w-4 h-4 mr-1" />
+                    Save
+                  </Button>
+                </div>
               </div>
-              <textarea
-                value={stdin}
-                onChange={(e) => setStdin(e.target.value)}
-                className="w-full h-[100px] px-4 py-2 bg-transparent font-mono text-sm resize-none focus:outline-none placeholder:text-muted-foreground"
-                spellCheck={false}
-                placeholder={'> Enter input values here (one per line)\n> e.g. 5\n> Hello'}
-              />
+              <div className={`${showInput ? 'h-[260px]' : 'h-[360px]'} p-4 overflow-auto font-mono text-sm transition-all`}>
+                {isRunning ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Executing code...
+                  </div>
+                ) : output ? (
+                  <pre className={`whitespace-pre-wrap ${isError ? 'text-destructive' : ''}`}>{output}</pre>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Click "Run" to execute your code...
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
