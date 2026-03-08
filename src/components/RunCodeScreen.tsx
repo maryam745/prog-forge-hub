@@ -239,9 +239,9 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
             <span className="font-medium">Tips</span>
           </div>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• JavaScript, Python aur C++ supported hain with full syntax highlighting</li>
+            <li>• JavaScript, Python and C++ are supported with full syntax highlighting</li>
             <li>• Code runs on a real server via Judge0 API</li>
-            <li>• "User Input" section use karo agar program mein input lena hai (scanf, input(), prompt)</li>
+            <li>• Use the "User Input" section to provide input for programs using scanf, input(), or cin</li>
             <li>• Save your sessions to review them later</li>
           </ul>
         </div>
