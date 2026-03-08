@@ -84,7 +84,8 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="back-button">
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
+              Back
             </button>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">Code Playground</h1>

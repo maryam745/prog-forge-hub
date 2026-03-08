@@ -66,7 +66,8 @@ const LanguageIntro = ({ language, onStart, onBack }: LanguageIntroProps) => {
       <div className="relative z-10 max-w-3xl mx-auto animate-slide-up">
         {/* Back button */}
         <button onClick={onBack} className="back-button mb-6">
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
+          Back
         </button>
 
         {/* Hero */}
