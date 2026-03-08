@@ -14,6 +14,8 @@ export interface UserProgress {
     };
   };
   totalPoints: number;
+  quizPoints: number;
+  quizzesCompleted: number;
 }
 
 export interface SavedSession {
