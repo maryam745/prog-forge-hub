@@ -165,9 +165,9 @@ const Index = () => {
         if (!selectedLanguage) return null;
         return <TopicsScreen language={selectedLanguage} onStartQuiz={handleStartAIQuiz} onBack={() => setScreen('menu')} />;
       case 'ai-quiz':
-        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('topics')} />;
+        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('topics')} onQuizComplete={addQuizPoints} />;
       case 'ai-quiz-category':
-        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('category-selection')} />;
+        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('category-selection')} onQuizComplete={addQuizPoints} />;
       case 'run-code':
         return <RunCodeScreen onSave={(lang, code) => saveSession(lang, code)} onBack={() => setScreen('menu')} />;
       case 'saved-sessions':
