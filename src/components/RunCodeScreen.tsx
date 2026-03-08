@@ -198,10 +198,10 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
             <span className="font-medium">Tips</span>
           </div>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• JavaScript runs natively in your browser</li>
-            <li>• Python execution is simulated for demonstration</li>
+            <li>• All 4 languages are supported: JavaScript, Python, C++, Java</li>
+            <li>• Code runs on a real server via Judge0 API</li>
             <li>• Save your sessions to review them later</li>
-            <li>• Use console.log() in JavaScript or print() in Python to see output</li>
+            <li>• Use console.log(), print(), cout, or System.out.println() for output</li>
           </ul>
         </div>
       </div>
