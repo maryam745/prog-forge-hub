@@ -64,6 +64,12 @@ serve(async (req) => {
 
     const result = await submitResponse.json();
 
+    // Decode base64 fields
+    const decode = (s: string | null) => s ? decodeURIComponent(escape(atob(s))) : null;
+    result.stdout = decode(result.stdout);
+    result.stderr = decode(result.stderr);
+    result.compile_output = decode(result.compile_output);
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
