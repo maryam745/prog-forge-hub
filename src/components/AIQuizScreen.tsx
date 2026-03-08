@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Zap, RotateCcw, Play, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Zap, Play, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { executeCode } from '@/services/judge0';
 
 interface AIQuizScreenProps {
   questions: any[];
+  language: 'python' | 'javascript' | 'cpp';
   onBack: () => void;
 }
 
-const AIQuizScreen = ({ questions, onBack }: AIQuizScreenProps) => {
+const AIQuizScreen = ({ questions, language, onBack }: AIQuizScreenProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | number>>({});
   const [showResult, setShowResult] = useState(false);
@@ -27,20 +27,27 @@ const AIQuizScreen = ({ questions, onBack }: AIQuizScreenProps) => {
     setCodeInputs({ ...codeInputs, [currentIndex]: value });
   };
 
-  const handleRunCode = async (language: string) => {
+  const handleRunCode = async () => {
     const code = codeInputs[currentIndex] || '';
     if (!code.trim()) return;
 
     setRunningCode(currentIndex);
-    const langMap: Record<string, string> = {
-      Python: 'python',
-      JavaScript: 'javascript',
-      'C++': 'cpp',
-    };
-    const result = await executeCode(code, langMap[language] || 'python');
+    const result = await executeCode(code, language);
     setCodeOutputs({ ...codeOutputs, [currentIndex]: result });
     setAnswers({ ...answers, [currentIndex]: code });
     setRunningCode(null);
+  };
+
+  const isCodingCorrect = (index: number): boolean | null => {
+    const q = questions[index];
+    const output = codeOutputs[index];
+    if (!q || q.type !== 'coding' || !output) return null;
+    if (output.isError) return false;
+
+    const expected = (q.exampleOutput || '').trim();
+    const actual = output.output.trim();
+    if (!expected) return actual.length > 0; // no expected output, just check it ran
+    return actual === expected;
   };
 
   const isAnswerCorrect = (index: number): boolean => {
@@ -52,9 +59,7 @@ const AIQuizScreen = ({ questions, onBack }: AIQuizScreenProps) => {
       return answer === q.correct;
     }
     if (q.type === 'coding') {
-      const output = codeOutputs[index];
-      if (!output) return false;
-      return !output.isError && output.output.trim().length > 0;
+      return isCodingCorrect(index) === true;
     }
     return false;
   };
@@ -121,6 +126,45 @@ const AIQuizScreen = ({ questions, onBack }: AIQuizScreenProps) => {
     );
   }
 
+  const renderCodingResult = () => {
+    const output = codeOutputs[currentIndex];
+    if (!output) return null;
+
+    const correct = isCodingCorrect(currentIndex);
+    const expected = (currentQuestion.exampleOutput || '').trim();
+
+    return (
+      <div className="space-y-3">
+        <div className={`rounded-xl p-4 font-mono text-sm ${output.isError ? 'bg-destructive/10 border border-destructive/30' : 'bg-muted/50'}`}>
+          <p className="text-xs font-medium mb-1 text-muted-foreground">Your Output:</p>
+          <pre className="whitespace-pre-wrap">{output.output}</pre>
+        </div>
+
+        {!output.isError && expected && (
+          <div className={`rounded-xl p-4 flex items-center gap-3 ${
+            correct ? 'bg-success/10 border border-success/40' : 'bg-destructive/10 border border-destructive/40'
+          }`}>
+            {correct ? (
+              <CheckCircle className="w-5 h-5 text-success shrink-0" />
+            ) : (
+              <XCircle className="w-5 h-5 text-destructive shrink-0" />
+            )}
+            <div>
+              <p className={`font-semibold ${correct ? 'text-success' : 'text-destructive'}`}>
+                {correct ? '✅ Correct! Output matches expected.' : '❌ Incorrect. Output does not match expected.'}
+              </p>
+              {!correct && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Expected: <code className="bg-muted px-1 rounded">{expected}</code>
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderQuestion = () => {
     if (!currentQuestion) return null;
 
@@ -147,7 +191,6 @@ const AIQuizScreen = ({ questions, onBack }: AIQuizScreenProps) => {
     }
 
     if (currentQuestion.type === 'coding') {
-      const output = codeOutputs[currentIndex];
       return (
         <div className="space-y-4">
           <h3 className="text-xl font-bold">{currentQuestion.title}</h3>
@@ -172,20 +215,15 @@ const AIQuizScreen = ({ questions, onBack }: AIQuizScreenProps) => {
           />
           <div className="flex gap-2">
             <Button
-              onClick={() => handleRunCode('Python')}
+              onClick={handleRunCode}
               disabled={runningCode === currentIndex}
               className="bg-green-600 hover:bg-green-700 gap-2"
             >
               {runningCode === currentIndex ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-              {runningCode === currentIndex ? 'Running...' : 'Run Code'}
+              {runningCode === currentIndex ? 'Running...' : 'Run & Check'}
             </Button>
           </div>
-          {output && (
-            <div className={`bg-muted/50 rounded-xl p-4 font-mono text-sm ${output.isError ? 'text-destructive' : ''}`}>
-              <p className="text-xs font-medium mb-1 text-muted-foreground">Output:</p>
-              <pre className="whitespace-pre-wrap">{output.output}</pre>
-            </div>
-          )}
+          {renderCodingResult()}
         </div>
       );
     }
