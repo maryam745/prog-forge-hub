@@ -1,4 +1,4 @@
-const JUDGE0_URL = 'http://localhost:2358';
+import { supabase } from '@/integrations/supabase/client';
 
 export const LANGUAGE_IDS: Record<string, number> = {
   python: 71,
@@ -16,7 +16,8 @@ export interface Judge0Result {
 
 export async function executeCode(
   sourceCode: string,
-  language: string
+  language: string,
+  stdin?: string
 ): Promise<{ output: string; isError: boolean }> {
   const languageId = LANGUAGE_IDS[language];
   if (!languageId) {
@@ -24,23 +25,19 @@ export async function executeCode(
   }
 
   try {
-    const response = await fetch(
-      `${JUDGE0_URL}/submissions/?base64_encoded=false&wait=true`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          source_code: sourceCode,
-          language_id: languageId,
-        }),
-      }
-    );
+    const { data, error } = await supabase.functions.invoke('execute-code', {
+      body: {
+        source_code: sourceCode,
+        language_id: languageId,
+        stdin: stdin || '',
+      },
+    });
 
-    if (!response.ok) {
-      return { output: `Judge0 error: ${response.status} ${response.statusText}`, isError: true };
+    if (error) {
+      return { output: `Error: ${error.message}`, isError: true };
     }
 
-    const result: Judge0Result = await response.json();
+    const result = data as Judge0Result;
 
     if (result.stdout) {
       return { output: result.stdout, isError: false };
@@ -53,11 +50,11 @@ export async function executeCode(
     }
     return {
       output: result.status?.description || 'Code executed successfully (no output)',
-      isError: result.status?.id !== 3, // 3 = Accepted
+      isError: result.status?.id !== 3,
     };
   } catch (error: any) {
     return {
-      output: `Connection error: ${error.message}. Make sure Judge0 is running on port 2358.`,
+      output: `Connection error: ${error.message}`,
       isError: true,
     };
   }
