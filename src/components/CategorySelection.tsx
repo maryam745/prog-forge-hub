@@ -41,7 +41,8 @@ const CategorySelection = ({ language, completedLevels, onSelect, onBack }: Cate
           {categories.map((cat, index) => {
             const Icon = cat.icon;
             const completed = completedLevels(cat.id);
-            const total = 7;
+            const totalByCategory: Record<string, number> = { basic: 15, intermediate: 15, advanced: 12 };
+            const total = totalByCategory[cat.id] || 15;
 
             return (
               <div
