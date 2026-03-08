@@ -14,6 +14,8 @@ export interface UserProgress {
     };
   };
   totalPoints: number;
+  quizPoints: number;
+  quizzesCompleted: number;
 }
 
 export interface SavedSession {
@@ -31,6 +33,8 @@ const defaultProgress = (name: string): UserProgress => ({
     cpp: { basic: {}, intermediate: {}, advanced: {} },
   },
   totalPoints: 0,
+  quizPoints: 0,
+  quizzesCompleted: 0,
 });
 
 export const useProgress = () => {
@@ -114,6 +118,17 @@ export const useProgress = () => {
     saveProgress(updatedProgress);
   };
 
+  const addQuizPoints = (score: number) => {
+    if (!progress) return;
+    const updatedProgress = {
+      ...progress,
+      totalPoints: progress.totalPoints + score,
+      quizPoints: (progress.quizPoints || 0) + score,
+      quizzesCompleted: (progress.quizzesCompleted || 0) + 1,
+    };
+    saveProgress(updatedProgress);
+  };
+
   const getLevelProgress = (language: string, category: string, level: number) => {
     if (!progress) return null;
     return progress.languages[language]?.[category]?.[level] || null;
@@ -170,6 +185,7 @@ export const useProgress = () => {
     loadUser,
     createUser,
     completeLevel,
+    addQuizPoints,
     getLevelProgress,
     getCompletedLevels,
     getTotalCompletedLevels,

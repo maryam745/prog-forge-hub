@@ -39,7 +39,7 @@ const Index = () => {
 
   const {
     currentUser, progress, users, savedSessions,
-    loadUser, createUser, completeLevel, getLevelProgress,
+    loadUser, createUser, completeLevel, addQuizPoints, getLevelProgress,
     getCompletedLevels, getTotalCompletedLevels, saveSession, deleteSession, logout,
   } = useProgress();
 
@@ -109,7 +109,15 @@ const Index = () => {
         return <LanguageSelection onSelect={handleSelectLanguage} onBack={() => setScreen('dashboard')} />;
       case 'language-intro':
         if (!selectedLanguage) return null;
-        return <LanguageIntro language={selectedLanguage} onStart={handleStartLanguage} onBack={() => setScreen('language-selection')} />;
+        return (
+          <LanguageIntro
+            language={selectedLanguage}
+            progress={progress}
+            getCompletedLevels={getCompletedLevels}
+            onStart={handleStartLanguage}
+            onBack={() => setScreen('language-selection')}
+          />
+        );
       case 'menu':
         if (!selectedLanguage) return null;
         return (
@@ -157,9 +165,9 @@ const Index = () => {
         if (!selectedLanguage) return null;
         return <TopicsScreen language={selectedLanguage} onStartQuiz={handleStartAIQuiz} onBack={() => setScreen('menu')} />;
       case 'ai-quiz':
-        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('topics')} />;
+        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('topics')} onQuizComplete={addQuizPoints} />;
       case 'ai-quiz-category':
-        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('category-selection')} />;
+        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('category-selection')} onQuizComplete={addQuizPoints} />;
       case 'run-code':
         return <RunCodeScreen onSave={(lang, code) => saveSession(lang, code)} onBack={() => setScreen('menu')} />;
       case 'saved-sessions':
