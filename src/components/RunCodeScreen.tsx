@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ArrowLeft, Play, Save, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Play, Save, CheckCircle, Loader2, Terminal, Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { executeCode, LANGUAGE_IDS } from '@/services/judge0';
+import { executeCode } from '@/services/judge0';
+import Editor from '@monaco-editor/react';
 
 interface RunCodeScreenProps {
   onSave: (language: string, code: string) => void;
@@ -39,9 +40,17 @@ int main() {
 }`,
 };
 
+const monacoLanguageMap: Record<string, string> = {
+  javascript: 'javascript',
+  python: 'python',
+  cpp: 'cpp',
+};
+
 const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
   const [language, setLanguage] = useState('javascript');
   const [code, setCode] = useState(starterCodes.javascript);
+  const [stdin, setStdin] = useState('');
+  const [showInput, setShowInput] = useState(false);
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -64,7 +73,7 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
     setIsRunning(true);
     setIsError(false);
 
-    const result = await executeCode(code, language);
+    const result = await executeCode(code, language, stdin || undefined);
     setOutput(result.output);
     setIsError(result.isError);
     setIsRunning(false);
@@ -97,7 +106,7 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
 
       <div className="relative z-10 max-w-5xl mx-auto animate-slide-up">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="back-button">
               <ArrowLeft className="w-4 h-4" />
@@ -141,43 +150,84 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
                 {language === 'javascript' ? 'script.js' : language === 'python' ? 'main.py' : 'main.cpp'}
               </span>
             </div>
-            <textarea
+            <Editor
+              height="400px"
+              language={monacoLanguageMap[language]}
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full h-[400px] p-4 bg-transparent font-mono text-sm resize-none focus:outline-none"
-              spellCheck={false}
-              placeholder="Write your code here..."
+              onChange={(val) => setCode(val || '')}
+              theme="vs-dark"
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                tabSize: language === 'python' ? 4 : 2,
+                wordWrap: 'on',
+                padding: { top: 12 },
+              }}
             />
           </div>
 
-          {/* Output */}
-          <div className="glass-card overflow-hidden">
-            <div className="p-3 bg-card border-b border-border flex items-center justify-between">
-              <span className="text-sm font-medium">Output</span>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={runCode} disabled={isRunning} className="bg-green-600 hover:bg-green-700">
-                  {isRunning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Play className="w-4 h-4 mr-1" />}
-                  {isRunning ? 'Running...' : 'Run'}
-                </Button>
-                <Button size="sm" variant="outline" onClick={handleSave}>
-                  <Save className="w-4 h-4 mr-1" />
-                  Save
-                </Button>
-              </div>
-            </div>
-            <div className="h-[400px] p-4 overflow-auto font-mono text-sm">
-              {isRunning ? (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Executing code...
+          {/* Output + Input */}
+          <div className="flex flex-col gap-4">
+            {/* Stdin Input */}
+            <div className="glass-card overflow-hidden">
+              <button
+                onClick={() => setShowInput(!showInput)}
+                className="w-full p-3 bg-card border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Keyboard className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">User Input (stdin)</span>
                 </div>
-              ) : output ? (
-                <pre className={`whitespace-pre-wrap ${isError ? 'text-destructive' : ''}`}>{output}</pre>
-              ) : (
-                <p className="text-muted-foreground">
-                  Click "Run" to execute your code...
-                </p>
+                <span className="text-xs text-muted-foreground">
+                  {showInput ? 'Click to hide' : 'Click to add input'}
+                </span>
+              </button>
+              {showInput && (
+                <textarea
+                  value={stdin}
+                  onChange={(e) => setStdin(e.target.value)}
+                  className="w-full h-[100px] p-3 bg-transparent font-mono text-sm resize-none focus:outline-none placeholder:text-muted-foreground"
+                  spellCheck={false}
+                  placeholder="Enter input values here (each on a new line)...&#10;Example:&#10;5&#10;Hello"
+                />
               )}
+            </div>
+
+            {/* Output */}
+            <div className="glass-card overflow-hidden flex-1">
+              <div className="p-3 bg-card border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Output</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={runCode} disabled={isRunning} className="bg-green-600 hover:bg-green-700">
+                    {isRunning ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Play className="w-4 h-4 mr-1" />}
+                    {isRunning ? 'Running...' : 'Run'}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleSave}>
+                    <Save className="w-4 h-4 mr-1" />
+                    Save
+                  </Button>
+                </div>
+              </div>
+              <div className={`${showInput ? 'h-[260px]' : 'h-[360px]'} p-4 overflow-auto font-mono text-sm transition-all`}>
+                {isRunning ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Executing code...
+                  </div>
+                ) : output ? (
+                  <pre className={`whitespace-pre-wrap ${isError ? 'text-destructive' : ''}`}>{output}</pre>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Click "Run" to execute your code...
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -189,10 +239,10 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
             <span className="font-medium">Tips</span>
           </div>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• JavaScript, Python aur C++ supported hain</li>
+            <li>• JavaScript, Python aur C++ supported hain with full syntax highlighting</li>
             <li>• Code runs on a real server via Judge0 API</li>
+            <li>• "User Input" section use karo agar program mein input lena hai (scanf, input(), prompt)</li>
             <li>• Save your sessions to review them later</li>
-            <li>• Use console.log(), print(), or cout for output</li>
           </ul>
         </div>
       </div>
