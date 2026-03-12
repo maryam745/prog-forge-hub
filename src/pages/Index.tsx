@@ -12,6 +12,7 @@ import QuestionScreen from '@/components/QuestionScreen';
 import RunCodeScreen from '@/components/RunCodeScreen';
 import SavedSessions from '@/components/SavedSessions';
 import TopicsScreen from '@/components/TopicsScreen';
+import QuizModeScreen from '@/components/QuizModeScreen';
 import AIQuizScreen from '@/components/AIQuizScreen';
 
 type Screen =
@@ -27,6 +28,7 @@ type Screen =
   | 'run-code'
   | 'saved-sessions'
   | 'topics'
+  | 'quiz-mode-select'
   | 'ai-quiz'
   | 'ai-quiz-category';
 
@@ -36,6 +38,9 @@ const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState<'basic' | 'intermediate' | 'advanced' | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [aiQuizQuestions, setAIQuizQuestions] = useState<any[]>([]);
+  const [quizTopic, setQuizTopic] = useState<string>('');
+  const [quizTopicCategory, setQuizTopicCategory] = useState<string>('');
+  const [quizMode, setQuizMode] = useState<'mcq' | 'short' | 'coding'>('mcq');
 
   const {
     currentUser, progress, users, savedSessions,
@@ -77,8 +82,15 @@ const Index = () => {
     setScreen('levels');
   };
 
-  const handleStartAIQuiz = (questions: any[]) => {
+  const handleSelectTopic = (topic: string, category: string) => {
+    setQuizTopic(topic);
+    setQuizTopicCategory(category);
+    setScreen('quiz-mode-select');
+  };
+
+  const handleStartAIQuiz = (questions: any[], mode: 'mcq' | 'short' | 'coding') => {
     setAIQuizQuestions(questions);
+    setQuizMode(mode);
     setScreen('ai-quiz');
   };
 
@@ -163,9 +175,20 @@ const Index = () => {
         );
       case 'topics':
         if (!selectedLanguage) return null;
-        return <TopicsScreen language={selectedLanguage} onStartQuiz={handleStartAIQuiz} onBack={() => setScreen('menu')} />;
+        return <TopicsScreen language={selectedLanguage} onSelectTopic={handleSelectTopic} onBack={() => setScreen('menu')} />;
+      case 'quiz-mode-select':
+        if (!selectedLanguage) return null;
+        return (
+          <QuizModeScreen
+            language={selectedLanguage}
+            topic={quizTopic}
+            category={quizTopicCategory}
+            onStartQuiz={handleStartAIQuiz}
+            onBack={() => setScreen('topics')}
+          />
+        );
       case 'ai-quiz':
-        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('topics')} onQuizComplete={addQuizPoints} />;
+        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} mode={quizMode} onBack={() => setScreen('quiz-mode-select')} onQuizComplete={addQuizPoints} />;
       case 'ai-quiz-category':
         return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('category-selection')} onQuizComplete={addQuizPoints} />;
       case 'run-code':
