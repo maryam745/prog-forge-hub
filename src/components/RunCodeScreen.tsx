@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Play, Save, CheckCircle, Loader2, Terminal, Keyboard } from 'lucide-react';
+import { ArrowLeft, Play, Save, CheckCircle, Loader2, Terminal, Keyboard, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { executeCode } from '@/services/judge0';
@@ -8,45 +8,18 @@ import Editor from '@monaco-editor/react';
 interface RunCodeScreenProps {
   onSave: (language: string, code: string) => void;
   onBack: () => void;
+  onHome?: () => void;
 }
 
 const starterCodes: Record<string, string> = {
-  javascript: `// JavaScript Playground
-// Write your code here!
-
-function greet(name) {
-  return "Hello, " + name + "!";
-}
-
-// Test your function
-console.log(greet("World"));`,
-  python: `# Python Playground
-# Write your code here!
-
-def greet(name):
-    return f"Hello, {name}!"
-
-# Test your function
-print(greet("World"))`,
-  cpp: `// C++ Playground
-// Write your code here!
-#include <iostream>
-using namespace std;
-
-int main() {
-    string name = "World";
-    cout << "Hello, " << name << "!" << endl;
-    return 0;
-}`,
+  javascript: `// JavaScript Playground\n// Write your code here!\n\nfunction greet(name) {\n  return "Hello, " + name + "!";\n}\n\n// Test your function\nconsole.log(greet("World"));`,
+  python: `# Python Playground\n# Write your code here!\n\ndef greet(name):\n    return f"Hello, {name}!"\n\n# Test your function\nprint(greet("World"))`,
+  cpp: `// C++ Playground\n// Write your code here!\n#include <iostream>\nusing namespace std;\n\nint main() {\n    string name = "World";\n    cout << "Hello, " << name << "!" << endl;\n    return 0;\n}`,
 };
 
-const monacoLanguageMap: Record<string, string> = {
-  javascript: 'javascript',
-  python: 'python',
-  cpp: 'cpp',
-};
+const monacoLanguageMap: Record<string, string> = { javascript: 'javascript', python: 'python', cpp: 'cpp' };
 
-const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
+const RunCodeScreen = ({ onSave, onBack, onHome }: RunCodeScreenProps) => {
   const [language, setLanguage] = useState('javascript');
   const [code, setCode] = useState(starterCodes.javascript);
   const [stdin, setStdin] = useState('');
@@ -56,11 +29,7 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
   const [isError, setIsError] = useState(false);
   const { toast } = useToast();
 
-  const handleLanguageChange = (lang: string) => {
-    setLanguage(lang);
-    setCode(starterCodes[lang]);
-    setOutput('');
-  };
+  const handleLanguageChange = (lang: string) => { setLanguage(lang); setCode(starterCodes[lang]); setOutput(''); };
 
   const languages = [
     { id: 'javascript', label: 'JavaScript', gradient: 'from-yellow-500 to-orange-500' },
@@ -69,43 +38,28 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
   ];
 
   const runCode = async () => {
-    setOutput('');
-    setIsRunning(true);
-    setIsError(false);
-
+    setOutput(''); setIsRunning(true); setIsError(false);
     const result = await executeCode(code, language, stdin || undefined);
-    setOutput(result.output);
-    setIsError(result.isError);
-    setIsRunning(false);
+    setOutput(result.output); setIsError(result.isError); setIsRunning(false);
   };
 
   const handleSave = () => {
     if (code.trim().length < 10) {
-      toast({
-        title: 'Cannot save',
-        description: 'Please write some code before saving.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Cannot save', description: 'Please write some code before saving.', variant: 'destructive' });
       return;
     }
-
     onSave(language, code);
-    toast({
-      title: 'Session saved!',
-      description: 'Your code has been saved successfully.',
-    });
+    toast({ title: 'Session saved!', description: 'Your code has been saved successfully.' });
   };
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto animate-slide-up">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="back-button">
@@ -118,27 +72,29 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
             </div>
           </div>
 
-          {/* Language Toggle */}
-          <div className="flex bg-muted rounded-xl p-1 flex-wrap gap-1">
-            {languages.map((lang) => (
-              <button
-                key={lang.id}
-                onClick={() => handleLanguageChange(lang.id)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  language === lang.id
-                    ? `bg-gradient-to-r ${lang.gradient} text-white`
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {lang.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <div className="flex bg-muted rounded-xl p-1 flex-wrap gap-1">
+              {languages.map((lang) => (
+                <button
+                  key={lang.id}
+                  onClick={() => handleLanguageChange(lang.id)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    language === lang.id ? `bg-gradient-to-r ${lang.gradient} text-white` : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {lang.label}
+                </button>
+              ))}
+            </div>
+            {onHome && (
+              <Button variant="ghost" size="icon" onClick={onHome}>
+                <Home className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Editor */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Code Editor */}
           <div className="glass-card overflow-hidden">
             <div className="p-3 bg-card border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -156,47 +112,24 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
               value={code}
               onChange={(val) => setCode(val || '')}
               theme="vs-dark"
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                lineNumbers: 'on',
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                tabSize: language === 'python' ? 4 : 2,
-                wordWrap: 'on',
-                padding: { top: 12 },
-              }}
+              options={{ minimap: { enabled: false }, fontSize: 14, lineNumbers: 'on', scrollBeyondLastLine: false, automaticLayout: true, tabSize: language === 'python' ? 4 : 2, wordWrap: 'on', padding: { top: 12 } }}
             />
           </div>
 
-          {/* Output + Input */}
           <div className="flex flex-col gap-4">
-            {/* Stdin Input */}
             <div className="glass-card overflow-hidden">
-              <button
-                onClick={() => setShowInput(!showInput)}
-                className="w-full p-3 bg-card border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
-              >
+              <button onClick={() => setShowInput(!showInput)} className="w-full p-3 bg-card border-b border-border flex items-center justify-between hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-2">
                   <Keyboard className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium">User Input (stdin)</span>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {showInput ? 'Click to hide' : 'Click to add input'}
-                </span>
+                <span className="text-xs text-muted-foreground">{showInput ? 'Click to hide' : 'Click to add input'}</span>
               </button>
               {showInput && (
-                <textarea
-                  value={stdin}
-                  onChange={(e) => setStdin(e.target.value)}
-                  className="w-full h-[100px] p-3 bg-transparent font-mono text-sm resize-none focus:outline-none placeholder:text-muted-foreground"
-                  spellCheck={false}
-                  placeholder="Enter input values here (each on a new line)...&#10;Example:&#10;5&#10;Hello"
-                />
+                <textarea value={stdin} onChange={(e) => setStdin(e.target.value)} className="w-full h-[100px] p-3 bg-transparent font-mono text-sm resize-none focus:outline-none placeholder:text-muted-foreground" spellCheck={false} placeholder="Enter input values here (each on a new line)...&#10;Example:&#10;5&#10;Hello" />
               )}
             </div>
 
-            {/* Output */}
             <div className="glass-card overflow-hidden flex-1">
               <div className="p-3 bg-card border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -209,30 +142,23 @@ const RunCodeScreen = ({ onSave, onBack }: RunCodeScreenProps) => {
                     {isRunning ? 'Running...' : 'Run'}
                   </Button>
                   <Button size="sm" variant="outline" onClick={handleSave}>
-                    <Save className="w-4 h-4 mr-1" />
-                    Save
+                    <Save className="w-4 h-4 mr-1" /> Save
                   </Button>
                 </div>
               </div>
               <div className={`${showInput ? 'h-[260px]' : 'h-[360px]'} p-4 overflow-auto font-mono text-sm transition-all`}>
                 {isRunning ? (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Executing code...
-                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Executing code...</div>
                 ) : output ? (
                   <pre className={`whitespace-pre-wrap ${isError ? 'text-destructive' : ''}`}>{output}</pre>
                 ) : (
-                  <p className="text-muted-foreground">
-                    Click "Run" to execute your code...
-                  </p>
+                  <p className="text-muted-foreground">Click "Run" to execute your code...</p>
                 )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Tips */}
         <div className="mt-6 glass-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="w-5 h-5 text-primary" />
