@@ -70,6 +70,47 @@ Rules:
 - Return ONLY the JSON array, no markdown or explanation`;
   }
 
+  if (mode === "level") {
+    return `Generate a programming quiz for ${language} at ${category} difficulty level${topicStr}.
+
+Return exactly 10 MCQ questions, 5 short answer questions, and 5 coding problems as a JSON array (20 items total).
+
+MCQ format:
+{
+  "type": "mcq",
+  "question": "question text",
+  "options": ["A", "B", "C", "D"],
+  "correct": 0
+}
+
+Short answer format:
+{
+  "type": "short",
+  "question": "question text",
+  "answer": "correct short answer",
+  "hasCode": true/false,
+  "codeSnippet": "buggy code if hasCode is true, otherwise omit"
+}
+
+Coding problem format:
+{
+  "type": "coding",
+  "title": "Problem Title",
+  "description": "Problem description explaining what to implement",
+  "exampleInput": "example input",
+  "exampleOutput": "expected output",
+  "hint": "optional hint"
+}
+
+Rules:
+- MCQ "correct" is 0-indexed option index
+- At least 2 short answer questions should be "find the error" type with code snippets
+- Coding problems should be solvable in ${language}
+- ALL questions must be specifically about ${topic || language}
+- First put all MCQs, then short answers, then coding problems
+- Return ONLY the JSON array, no markdown or explanation`;
+  }
+
   // fallback: mixed (legacy)
   const numMCQ = Math.ceil(count * 0.6);
   const numCoding = count - numMCQ;

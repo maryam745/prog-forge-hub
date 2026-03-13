@@ -1,10 +1,12 @@
-import { ArrowLeft, Zap, Flame, Crown } from 'lucide-react';
+import { ArrowLeft, Zap, Flame, Crown, Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface CategorySelectionProps {
   language: 'python' | 'javascript' | 'cpp';
   completedLevels: (category: string) => number;
   onSelect: (category: 'basic' | 'intermediate' | 'advanced' | 'runcode') => void;
   onBack: () => void;
+  onHome?: () => void;
 }
 
 const categories = [
@@ -15,7 +17,7 @@ const categories = [
 
 const languageNames = { python: 'Python', javascript: 'JavaScript', cpp: 'C++' };
 
-const CategorySelection = ({ language, completedLevels, onSelect, onBack }: CategorySelectionProps) => {
+const CategorySelection = ({ language, completedLevels, onSelect, onBack, onHome }: CategorySelectionProps) => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -24,17 +26,24 @@ const CategorySelection = ({ language, completedLevels, onSelect, onBack }: Cate
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto animate-slide-up">
-        <div className="flex items-center gap-4 mb-8">
-          <button onClick={onBack} className="back-button">
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold">
-              <span className="gradient-text neon-text">{languageNames[language]}</span> Categories
-            </h1>
-            <p className="text-muted-foreground">Choose your difficulty level</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="back-button">
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold">
+                <span className="gradient-text neon-text">{languageNames[language]}</span> Categories
+              </h1>
+              <p className="text-muted-foreground">Choose your difficulty level</p>
+            </div>
           </div>
+          {onHome && (
+            <Button variant="ghost" size="icon" onClick={onHome} className="shrink-0">
+              <Home className="w-5 h-5" />
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

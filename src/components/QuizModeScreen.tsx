@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, Brain, FileText, Code, Loader2, Clock } from 'lucide-react';
+import { ArrowLeft, Brain, FileText, Code, Loader2, Clock, Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 
 interface QuizModeScreenProps {
@@ -8,6 +9,7 @@ interface QuizModeScreenProps {
   category: string;
   onStartQuiz: (questions: any[], mode: 'mcq' | 'short' | 'coding') => void;
   onBack: () => void;
+  onHome?: () => void;
 }
 
 const languageNames = {
@@ -22,7 +24,7 @@ const modes = [
     title: 'MCQs',
     description: '10 multiple choice questions to test your conceptual knowledge',
     icon: Brain,
-    time: '10 min',
+    time: '5 min',
     color: 'from-primary to-secondary',
     badgeClass: 'bg-primary/20 text-primary',
   },
@@ -31,7 +33,7 @@ const modes = [
     title: 'Short Answers',
     description: '10 short answer questions including "find the error" code snippets',
     icon: FileText,
-    time: '15 min',
+    time: '10 min',
     color: 'from-secondary to-accent',
     badgeClass: 'bg-secondary/20 text-secondary',
   },
@@ -40,13 +42,13 @@ const modes = [
     title: 'Coding Challenges',
     description: '10 coding problems — write, run, and test your solutions',
     icon: Code,
-    time: '30 min',
+    time: '15 min',
     color: 'from-accent to-primary',
     badgeClass: 'bg-accent/20 text-accent',
   },
 ];
 
-const QuizModeScreen = ({ language, topic, category, onStartQuiz, onBack }: QuizModeScreenProps) => {
+const QuizModeScreen = ({ language, topic, category, onStartQuiz, onBack, onHome }: QuizModeScreenProps) => {
   const [loadingMode, setLoadingMode] = useState<string | null>(null);
 
   const handleModeClick = async (mode: 'mcq' | 'short' | 'coding') => {
@@ -84,19 +86,26 @@ const QuizModeScreen = ({ language, topic, category, onStartQuiz, onBack }: Quiz
       </div>
 
       <div className="relative z-10 max-w-3xl mx-auto animate-slide-up">
-        <div className="flex items-center gap-4 mb-8">
-          <button onClick={onBack} className="back-button">
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold">
-              <span className="gradient-text neon-text">Choose Quiz Mode</span>
-            </h1>
-            <p className="text-muted-foreground">
-              {languageNames[language]} — {topic}
-            </p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="back-button">
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold">
+                <span className="gradient-text neon-text">Choose Quiz Mode</span>
+              </h1>
+              <p className="text-muted-foreground">
+                {languageNames[language]} — {topic}
+              </p>
+            </div>
           </div>
+          {onHome && (
+            <Button variant="ghost" size="icon" onClick={onHome} className="shrink-0">
+              <Home className="w-5 h-5" />
+            </Button>
+          )}
         </div>
 
         <div className="space-y-4">

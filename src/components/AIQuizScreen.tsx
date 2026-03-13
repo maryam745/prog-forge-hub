@@ -1,20 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Zap, Play, Loader2, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Zap, Play, Loader2, Clock, AlertTriangle, LogOut, Home, RotateCcw, Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { executeCode } from '@/services/judge0';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AIQuizScreenProps {
   questions: any[];
   language: 'python' | 'javascript' | 'cpp';
   mode?: 'mcq' | 'short' | 'coding';
   onBack: () => void;
+  onHome?: () => void;
   onQuizComplete?: (score: number) => void;
+  onRetry?: () => void;
 }
 
 const TIMER_SECONDS: Record<string, number> = {
-  mcq: 10 * 60,
-  short: 15 * 60,
-  coding: 30 * 60,
+  mcq: 5 * 60,
+  short: 10 * 60,
+  coding: 15 * 60,
 };
 
 const formatTime = (s: number) => {
@@ -23,21 +27,31 @@ const formatTime = (s: number) => {
   return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
 };
 
-const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQuizScreenProps) => {
+const AIQuizScreen = ({ questions, language, mode, onBack, onHome, onQuizComplete, onRetry }: AIQuizScreenProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | number>>({});
   const [showResult, setShowResult] = useState(false);
+  const [timeOver, setTimeOver] = useState(false);
   const [codeInputs, setCodeInputs] = useState<Record<number, string>>({});
   const [codeOutputs, setCodeOutputs] = useState<Record<number, { output: string; isError: boolean }>>({});
   const [runningCode, setRunningCode] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS[mode || 'mcq'] || 600);
+  const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS[mode || 'mcq'] || 300);
   const [timeTaken, setTimeTaken] = useState(0);
+  const [showQuitDialog, setShowQuitDialog] = useState(false);
+  const [stdinInputs, setStdinInputs] = useState<Record<number, string>>({});
+  const [showStdin, setShowStdin] = useState<Record<number, boolean>>({});
 
-  const totalTime = TIMER_SECONDS[mode || 'mcq'] || 600;
+  // AI validation state
+  const [validating, setValidating] = useState(false);
+  const [aiResults, setAiResults] = useState<Record<number, { correct: boolean; explanation: string }>>({});
 
+  const totalTime = TIMER_SECONDS[mode || 'mcq'] || 300;
   const currentQuestion = questions[currentIndex];
 
   const isAnswerCorrect = useCallback((index: number): boolean => {
+    // If we have AI validation result, use that
+    if (aiResults[index] !== undefined) return aiResults[index].correct;
+
     const q = questions[index];
     const answer = answers[index];
     if (!q || answer === undefined) return false;
@@ -57,22 +71,64 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQ
       return actual === expected;
     }
     return false;
-  }, [questions, answers, codeOutputs]);
+  }, [questions, answers, codeOutputs, aiResults]);
 
   const calculateScore = useCallback(() => {
     return questions.reduce((score: number, _: any, i: number) => score + (isAnswerCorrect(i) ? 1 : 0), 0);
   }, [questions, isAnswerCorrect]);
 
-  const finishQuiz = useCallback(() => {
+  const validateShortAnswers = useCallback(async () => {
+    const shortAnswers = questions
+      .map((q: any, i: number) => ({ q, i }))
+      .filter(({ q, i }: any) => q.type === 'short' && answers[i] !== undefined);
+
+    if (shortAnswers.length === 0) return;
+
+    setValidating(true);
+    try {
+      const toValidate = shortAnswers.map(({ q, i }: any) => ({
+        question: q.question,
+        userAnswer: String(answers[i]),
+        correctAnswer: q.answer,
+        hasCode: q.hasCode || false,
+        codeSnippet: q.codeSnippet || '',
+        isRewrite: q.hasCode || false,
+      }));
+
+      const { data, error } = await supabase.functions.invoke('validate-answer', {
+        body: { answers: toValidate, language },
+      });
+
+      if (!error && data?.results) {
+        const newResults: Record<number, { correct: boolean; explanation: string }> = {};
+        shortAnswers.forEach(({ i }: any, idx: number) => {
+          if (data.results[idx]) {
+            newResults[i] = data.results[idx];
+          }
+        });
+        setAiResults(newResults);
+      }
+    } catch (err) {
+      console.error('Validation failed:', err);
+    } finally {
+      setValidating(false);
+    }
+  }, [questions, answers, language]);
+
+  const finishQuiz = useCallback(async () => {
     setTimeTaken(totalTime - timeLeft);
     setShowResult(true);
+
+    // Validate short answers via AI
+    await validateShortAnswers();
+
     const score = calculateScore();
     onQuizComplete?.(score);
-  }, [totalTime, timeLeft, calculateScore, onQuizComplete]);
+  }, [totalTime, timeLeft, calculateScore, onQuizComplete, validateShortAnswers]);
 
   // Timer
   useEffect(() => {
-    if (showResult) return;
+    if (showResult || timeOver) return;
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -83,14 +139,15 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQ
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [showResult]);
+  }, [showResult, timeOver]);
 
-  // Auto-submit on timer end
+  // Time over
   useEffect(() => {
-    if (timeLeft === 0 && !showResult) {
-      finishQuiz();
+    if (timeLeft === 0 && !showResult && !timeOver) {
+      setTimeTaken(totalTime);
+      setTimeOver(true);
     }
-  }, [timeLeft, showResult, finishQuiz]);
+  }, [timeLeft, showResult, timeOver, totalTime]);
 
   const handleMCQAnswer = (optionIndex: number) => {
     setAnswers({ ...answers, [currentIndex]: optionIndex });
@@ -104,11 +161,15 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQ
     setCodeInputs({ ...codeInputs, [currentIndex]: value });
   };
 
+  const handleStdinChange = (value: string) => {
+    setStdinInputs({ ...stdinInputs, [currentIndex]: value });
+  };
+
   const handleRunCode = async () => {
     const code = codeInputs[currentIndex] || '';
     if (!code.trim()) return;
     setRunningCode(currentIndex);
-    const result = await executeCode(code, language);
+    const result = await executeCode(code, language, stdinInputs[currentIndex] || undefined);
     setCodeOutputs({ ...codeOutputs, [currentIndex]: result });
     setAnswers({ ...answers, [currentIndex]: code });
     setRunningCode(null);
@@ -126,8 +187,53 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQ
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
 
+  const handleRetry = () => {
+    setTimeOver(false);
+    setShowResult(false);
+    setCurrentIndex(0);
+    setAnswers({});
+    setCodeInputs({});
+    setCodeOutputs({});
+    setStdinInputs({});
+    setAiResults({});
+    setTimeLeft(TIMER_SECONDS[mode || 'mcq'] || 300);
+    setTimeTaken(0);
+    if (onRetry) onRetry();
+  };
+
   const isTimeLow = timeLeft <= 60;
 
+  // TIME OVER SCREEN
+  if (timeOver && !showResult) {
+    return (
+      <div className="min-h-screen bg-background p-4 md:p-8 flex items-center justify-center">
+        <div className="glass-card p-8 max-w-md w-full text-center animate-scale-in">
+          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-destructive to-orange-500 flex items-center justify-center animate-pulse">
+            <Clock className="w-12 h-12 text-background" />
+          </div>
+          <h2 className="text-3xl font-bold mb-2 text-destructive">⏰ Time Over!</h2>
+          <p className="text-muted-foreground mb-8">
+            You ran out of time. You can retry the quiz or go back.
+          </p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Button variant="outline" onClick={onBack} className="gap-2">
+              <ArrowLeft className="w-4 h-4" /> Go Back
+            </Button>
+            <Button onClick={handleRetry} className="gap-2 bg-gradient-to-r from-primary to-secondary text-background">
+              <RotateCcw className="w-4 h-4" /> Retry Quiz
+            </Button>
+            {onHome && (
+              <Button variant="ghost" onClick={onHome} className="gap-2">
+                <Home className="w-4 h-4" /> Home
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // RESULTS SCREEN
   if (showResult) {
     const score = calculateScore();
     const total = questions.length;
@@ -140,57 +246,81 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQ
       <div className="min-h-screen bg-background p-4 md:p-8">
         <div className="max-w-4xl mx-auto animate-slide-up">
           <div className="glass-card p-8 text-center mb-8">
-            <div
-              className={`w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center ${
-                passed ? 'bg-gradient-to-br from-success to-primary' : 'bg-gradient-to-br from-orange-400 to-destructive'
-              } animate-glow-pulse`}
-            >
-              {passed ? <CheckCircle className="w-12 h-12 text-background" /> : <XCircle className="w-12 h-12 text-background" />}
-            </div>
-            <h2 className="text-3xl font-bold mb-2 neon-text">{passed ? 'Excellent!' : 'Keep Practicing!'}</h2>
-            <p className="text-muted-foreground mb-4">{passed ? 'Great job on this quiz!' : 'You need at least 60% to pass.'}</p>
-            <div className="text-6xl font-bold gradient-text mb-2">{score} / {total}</div>
-            <p className="text-xl text-muted-foreground mb-2">{percentage}% correct</p>
-            <p className="text-sm text-muted-foreground mb-8 flex items-center justify-center gap-2">
-              <Clock className="w-4 h-4" />
-              Time taken: {mins}m {secs}s
-            </p>
-            <Button variant="outline" onClick={onBack} className="gap-2 cyan-glow-hover">
-              <ArrowLeft className="w-4 h-4" /> Back
-            </Button>
+            {validating ? (
+              <div className="py-8">
+                <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
+                <h2 className="text-xl font-bold mb-2">Validating Answers...</h2>
+                <p className="text-muted-foreground">AI is checking your short answers</p>
+              </div>
+            ) : (
+              <>
+                <div className={`w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center ${passed ? 'bg-gradient-to-br from-success to-primary' : 'bg-gradient-to-br from-orange-400 to-destructive'} animate-glow-pulse`}>
+                  {passed ? <CheckCircle className="w-12 h-12 text-background" /> : <XCircle className="w-12 h-12 text-background" />}
+                </div>
+                <h2 className="text-3xl font-bold mb-2 neon-text">{passed ? 'Excellent!' : 'Keep Practicing!'}</h2>
+                <p className="text-muted-foreground mb-4">{passed ? 'Great job on this quiz!' : 'You need at least 60% to pass.'}</p>
+                <div className="text-6xl font-bold gradient-text mb-2">{score} / {total}</div>
+                <p className="text-xl text-muted-foreground mb-2">{percentage}% correct</p>
+                <p className="text-sm text-muted-foreground mb-8 flex items-center justify-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Time taken: {mins}m {secs}s
+                </p>
+                <div className="flex gap-4 justify-center flex-wrap">
+                  <Button variant="outline" onClick={onBack} className="gap-2 cyan-glow-hover">
+                    <ArrowLeft className="w-4 h-4" /> Back
+                  </Button>
+                  <Button onClick={handleRetry} className="gap-2 bg-gradient-to-r from-primary to-secondary text-background">
+                    <RotateCcw className="w-4 h-4" /> Retry
+                  </Button>
+                  {onHome && (
+                    <Button variant="ghost" onClick={onHome} className="gap-2">
+                      <Home className="w-4 h-4" /> Home
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
-          <div className="glass-card p-6">
-            <h3 className="text-xl font-bold mb-4 gradient-text">Review</h3>
-            <div className="space-y-3">
-              {questions.map((q, i) => {
-                const correct = isAnswerCorrect(i);
-                return (
-                  <div key={i} className={`p-4 rounded-xl border ${correct ? 'bg-success/5 border-success/30' : 'bg-destructive/5 border-destructive/30'}`}>
-                    <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold ${correct ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
-                        {i + 1}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm">{q.question || q.title}</p>
-                        {q.type === 'short' && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Your answer: <span className={correct ? 'text-success' : 'text-destructive'}>{String(answers[i] || '—')}</span>
-                            {!correct && <> | Correct: <span className="text-success">{q.answer}</span></>}
-                          </p>
-                        )}
-                        {q.type === 'mcq' && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Correct: {q.options?.[q.correct]}
-                          </p>
-                        )}
+          {!validating && (
+            <div className="glass-card p-6">
+              <h3 className="text-xl font-bold mb-4 gradient-text">Review</h3>
+              <div className="space-y-3">
+                {questions.map((q: any, i: number) => {
+                  const correct = isAnswerCorrect(i);
+                  const aiResult = aiResults[i];
+                  return (
+                    <div key={i} className={`p-4 rounded-xl border ${correct ? 'bg-success/5 border-success/30' : 'bg-destructive/5 border-destructive/30'}`}>
+                      <div className="flex items-start gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold ${correct ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
+                          {i + 1}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm">{q.question || q.title}</p>
+                          {q.type === 'short' && (
+                            <div className="mt-1">
+                              <p className="text-xs text-muted-foreground">
+                                Your answer: <span className={correct ? 'text-success' : 'text-destructive'}>{String(answers[i] || '—')}</span>
+                                {!correct && <> | Correct: <span className="text-success">{q.answer}</span></>}
+                              </p>
+                              {aiResult?.explanation && (
+                                <p className="text-xs text-muted-foreground mt-1 italic">AI: {aiResult.explanation}</p>
+                              )}
+                            </div>
+                          )}
+                          {q.type === 'mcq' && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Correct: {q.options?.[q.correct]}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     );
@@ -258,21 +388,35 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQ
     }
 
     if (currentQuestion.type === 'short') {
+      const isCodeQuestion = currentQuestion.hasCode && currentQuestion.codeSnippet;
       return (
         <div className="space-y-4">
           <p className="text-xl font-medium">{currentQuestion.question}</p>
-          {currentQuestion.hasCode && currentQuestion.codeSnippet && (
+          {isCodeQuestion && (
             <div className="bg-muted/50 rounded-xl p-4 font-mono text-sm overflow-x-auto">
               <pre className="whitespace-pre-wrap">{currentQuestion.codeSnippet}</pre>
             </div>
           )}
-          <input
-            type="text"
-            value={String(answers[currentIndex] || '')}
-            onChange={(e) => handleShortAnswer(e.target.value)}
-            placeholder="Type your answer..."
-            className="w-full p-4 bg-muted/50 border-2 border-transparent rounded-xl font-medium focus:outline-none focus:border-primary transition-colors"
-          />
+          {isCodeQuestion ? (
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Rewrite the corrected program below:</p>
+              <textarea
+                value={String(answers[currentIndex] || '')}
+                onChange={(e) => handleShortAnswer(e.target.value)}
+                placeholder="Write the corrected code here..."
+                className="w-full h-40 p-4 bg-muted/50 border-2 border-transparent rounded-xl font-mono text-sm resize-none focus:outline-none focus:border-primary transition-colors"
+                spellCheck={false}
+              />
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={String(answers[currentIndex] || '')}
+              onChange={(e) => handleShortAnswer(e.target.value)}
+              placeholder="Type your answer..."
+              className="w-full p-4 bg-muted/50 border-2 border-transparent rounded-xl font-medium focus:outline-none focus:border-primary transition-colors"
+            />
+          )}
         </div>
       );
     }
@@ -300,6 +444,32 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQ
             placeholder="Write your solution here..."
             spellCheck={false}
           />
+
+          {/* Stdin Input */}
+          <div className="rounded-xl border border-border/50 overflow-hidden">
+            <button
+              onClick={() => setShowStdin({ ...showStdin, [currentIndex]: !showStdin[currentIndex] })}
+              className="w-full px-4 py-2 bg-muted/30 flex items-center justify-between hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Keyboard className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">User Input (stdin)</span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {showStdin[currentIndex] ? 'Hide' : 'Add input'}
+              </span>
+            </button>
+            {showStdin[currentIndex] && (
+              <textarea
+                value={stdinInputs[currentIndex] || ''}
+                onChange={(e) => handleStdinChange(e.target.value)}
+                className="w-full h-20 p-3 bg-transparent font-mono text-sm resize-none focus:outline-none"
+                spellCheck={false}
+                placeholder="Enter input values (each on a new line)..."
+              />
+            )}
+          </div>
+
           <div className="flex gap-2">
             <Button onClick={handleRunCode} disabled={runningCode === currentIndex} className="bg-green-600 hover:bg-green-700 gap-2">
               {runningCode === currentIndex ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
@@ -322,7 +492,7 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQ
       </div>
 
       <div className="relative z-10 max-w-3xl mx-auto animate-slide-up">
-        {/* Timer bar */}
+        {/* Timer bar with Quit */}
         <div className={`sticky top-4 z-20 glass-card px-4 py-3 mb-6 flex items-center justify-between rounded-2xl ${isTimeLow ? 'border-destructive/50 animate-pulse' : ''}`}>
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-primary" />
@@ -333,7 +503,18 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQ
             <Clock className="w-4 h-4" />
             {formatTime(timeLeft)}
           </div>
-          <span className="text-sm text-muted-foreground">{currentIndex + 1}/{questions.length}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{currentIndex + 1}/{questions.length}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowQuitDialog(true)}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1 h-8 px-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Quit</span>
+            </Button>
+          </div>
         </div>
 
         <div className="h-2 bg-muted rounded-full mb-6 overflow-hidden">
@@ -365,6 +546,26 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onQuizComplete }: AIQ
           </Button>
         </div>
       </div>
+
+      {/* Quit Confirmation Dialog */}
+      <Dialog open={showQuitDialog} onOpenChange={setShowQuitDialog}>
+        <DialogContent className="glass-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Quit Quiz?</DialogTitle>
+            <DialogDescription>
+              Do you really want to quit this quiz? Your progress will be lost.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowQuitDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={onBack} className="gap-2">
+              <LogOut className="w-4 h-4" /> Yes, Quit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

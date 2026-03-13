@@ -1,17 +1,14 @@
-import { useState } from 'react';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface TopicsScreenProps {
   language: 'python' | 'javascript' | 'cpp';
   onSelectTopic: (topic: string, category: string) => void;
   onBack: () => void;
+  onHome?: () => void;
 }
 
-const languageNames = {
-  python: 'Python',
-  javascript: 'JavaScript',
-  cpp: 'C++',
-};
+const languageNames = { python: 'Python', javascript: 'JavaScript', cpp: 'C++' };
 
 const topicsByLanguage: Record<string, { category: string; topics: string[] }[]> = {
   python: [
@@ -31,7 +28,7 @@ const topicsByLanguage: Record<string, { category: string; topics: string[] }[]>
   ],
 };
 
-const TopicsScreen = ({ language, onSelectTopic, onBack }: TopicsScreenProps) => {
+const TopicsScreen = ({ language, onSelectTopic, onBack, onHome }: TopicsScreenProps) => {
   const categories = topicsByLanguage[language] || [];
 
   return (
@@ -42,17 +39,24 @@ const TopicsScreen = ({ language, onSelectTopic, onBack }: TopicsScreenProps) =>
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto animate-slide-up">
-        <div className="flex items-center gap-4 mb-8">
-          <button onClick={onBack} className="back-button">
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold">
-              <span className="gradient-text neon-text">{languageNames[language]}</span> Quiz Topics
-            </h1>
-            <p className="text-muted-foreground">Select a topic, then choose your quiz mode</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="back-button">
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold">
+                <span className="gradient-text neon-text">{languageNames[language]}</span> Quiz Topics
+              </h1>
+              <p className="text-muted-foreground">Select a topic, then choose your quiz mode</p>
+            </div>
           </div>
+          {onHome && (
+            <Button variant="ghost" size="icon" onClick={onHome} className="shrink-0">
+              <Home className="w-5 h-5" />
+            </Button>
+          )}
         </div>
 
         <div className="space-y-8">
@@ -67,9 +71,7 @@ const TopicsScreen = ({ language, onSelectTopic, onBack }: TopicsScreenProps) =>
                     className="glass-card p-4 text-left group hover:scale-[1.02] transition-all duration-300 cyan-glow-hover"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium group-hover:text-primary transition-colors">
-                        {topic}
-                      </span>
+                      <span className="font-medium group-hover:text-primary transition-colors">{topic}</span>
                       <Sparkles className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
                   </button>
