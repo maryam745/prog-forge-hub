@@ -28,7 +28,7 @@ const formatTime = (s: number) => {
   return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
 };
 
-const AIQuizScreen = ({ questions, language, mode, onBack, onHome, onQuizComplete, onRetry }: AIQuizScreenProps) => {
+const AIQuizScreen = ({ questions, language, topic, mode, onBack, onHome, onQuizComplete, onRetry }: AIQuizScreenProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | number>>({});
   const [showResult, setShowResult] = useState(false);
