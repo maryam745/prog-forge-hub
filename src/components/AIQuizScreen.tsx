@@ -117,15 +117,16 @@ const AIQuizScreen = ({ questions, language, topic, mode, onBack, onHome, onQuiz
   }, [questions, answers, language]);
 
   const finishQuiz = useCallback(async () => {
-    setTimeTaken(totalTime - timeLeft);
+    const taken = totalTime - timeLeft;
+    setTimeTaken(taken);
     setShowResult(true);
 
     // Validate short answers via AI
     await validateShortAnswers();
 
     const score = calculateScore();
-    onQuizComplete?.(score);
-  }, [totalTime, timeLeft, calculateScore, onQuizComplete, validateShortAnswers]);
+    onQuizComplete?.(score, questions.length, taken);
+  }, [totalTime, timeLeft, calculateScore, onQuizComplete, validateShortAnswers, questions.length]);
 
   // Timer
   useEffect(() => {
