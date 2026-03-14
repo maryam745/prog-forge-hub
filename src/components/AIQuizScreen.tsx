@@ -8,10 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 interface AIQuizScreenProps {
   questions: any[];
   language: 'python' | 'javascript' | 'cpp';
+  topic?: string;
   mode?: 'mcq' | 'short' | 'coding';
   onBack: () => void;
   onHome?: () => void;
-  onQuizComplete?: (score: number) => void;
+  onQuizComplete?: (score: number, total: number, timeTaken: number) => void;
   onRetry?: () => void;
 }
 
@@ -27,7 +28,7 @@ const formatTime = (s: number) => {
   return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
 };
 
-const AIQuizScreen = ({ questions, language, mode, onBack, onHome, onQuizComplete, onRetry }: AIQuizScreenProps) => {
+const AIQuizScreen = ({ questions, language, topic, mode, onBack, onHome, onQuizComplete, onRetry }: AIQuizScreenProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | number>>({});
   const [showResult, setShowResult] = useState(false);
@@ -116,15 +117,16 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onHome, onQuizComplet
   }, [questions, answers, language]);
 
   const finishQuiz = useCallback(async () => {
-    setTimeTaken(totalTime - timeLeft);
+    const taken = totalTime - timeLeft;
+    setTimeTaken(taken);
     setShowResult(true);
 
     // Validate short answers via AI
     await validateShortAnswers();
 
     const score = calculateScore();
-    onQuizComplete?.(score);
-  }, [totalTime, timeLeft, calculateScore, onQuizComplete, validateShortAnswers]);
+    onQuizComplete?.(score, questions.length, taken);
+  }, [totalTime, timeLeft, calculateScore, onQuizComplete, validateShortAnswers, questions.length]);
 
   // Timer
   useEffect(() => {
@@ -186,6 +188,18 @@ const AIQuizScreen = ({ questions, language, mode, onBack, onHome, onQuizComplet
   const handlePrev = () => {
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
+
+  // Enter key to go next
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey && !showResult && !timeOver && answers[currentIndex] !== undefined) {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentIndex, answers, showResult, timeOver]);
 
   const handleRetry = () => {
     setTimeOver(false);

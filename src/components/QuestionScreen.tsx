@@ -122,6 +122,18 @@ const QuestionScreen = ({ language, category, level, questions, onComplete, onBa
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
 
+  // Enter key to go next
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey && !showResult && canProceed()) {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentIndex, answers, showResult, codeOutputs]);
+
   const handleFinish = () => {
     onComplete(calculateScore(), answers);
   };
