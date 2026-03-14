@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useProgress } from '@/hooks/useProgress';
-import { supabase } from '@/integrations/supabase/client';
 import SplashScreen from '@/components/SplashScreen';
 import UserScreen from '@/components/UserScreen';
 import Dashboard from '@/components/Dashboard';
@@ -15,7 +14,8 @@ import SavedSessions from '@/components/SavedSessions';
 import TopicsScreen from '@/components/TopicsScreen';
 import QuizModeScreen from '@/components/QuizModeScreen';
 import AIQuizScreen from '@/components/AIQuizScreen';
-import { Loader2, Zap } from 'lucide-react';
+import QuizDashboard from '@/components/QuizDashboard';
+import { getQuestions } from '@/questions';
 
 type Screen =
   | 'splash'
@@ -27,13 +27,13 @@ type Screen =
   | 'category-selection'
   | 'levels'
   | 'questions'
-  | 'level-loading'
   | 'run-code'
   | 'saved-sessions'
   | 'topics'
   | 'quiz-mode-select'
   | 'ai-quiz'
-  | 'ai-quiz-category';
+  | 'ai-quiz-category'
+  | 'quiz-dashboard';
 
 const languageNames: Record<string, string> = {
   python: 'Python',
@@ -41,40 +41,21 @@ const languageNames: Record<string, string> = {
   cpp: 'C++',
 };
 
-// Level topics for generating questions
-const levelTopics: Record<string, Record<string, string[]>> = {
-  python: {
-    basic: ['Input & Output','Variables & Data Types','Type Casting & Formatting','Arithmetic & Assignment Operators','Comparison & Logical Operators','Bitwise & Identity Operators','Strings - Basics & Indexing','Strings - Methods & Formatting','Lists - Create & Access','Lists - Methods & Slicing','Tuples & Named Tuples','Dictionaries','Sets & Frozensets','Conditional Statements','Loops - for & while'],
-    intermediate: ['Loop Control & Comprehensions','Functions - Basics','Functions - Args & Return Types','Lambda, Map & Filter','Recursion','Modules & Packages','File Handling - Read & Write','File Handling - CSV & JSON','Exception Handling','OOP - Classes & Objects','OOP - Inheritance','OOP - Encapsulation & Abstraction','Polymorphism','Magic Methods & Dunder','Regular Expressions'],
-    advanced: ['Decorators','Generators & Iterators','Context Managers','Closures & Scope','Async/Await','Threading & Multiprocessing','Metaclasses','Descriptors & Properties','Data Structures (Stacks, Queues)','Algorithm Basics','Unit Testing','Design Patterns'],
-  },
-  javascript: {
-    basic: ['Console & Output','Variables - let, const, var','Data Types & typeof','Type Coercion & Conversion','Arithmetic & Assignment Operators','Comparison & Logical Operators','Strings - Basics & Methods','Strings - Template Literals','Arrays - Create & Access','Arrays - Methods (push, pop, etc)','Objects - Basics','Objects - Destructuring & Spread','Conditional Statements','Loops - for, while, for...of','DOM Basics & Selectors'],
-    intermediate: ['DOM Manipulation & Events','Functions - Declaration & Expression','Arrow Functions & this','Closures & Scope','Callbacks','Promises','Async/Await','Error Handling - try/catch','Classes & Constructors','Inheritance & super','Modules - import/export','Array Methods - map, filter, reduce','JSON & Fetch API','LocalStorage & SessionStorage','Regular Expressions'],
-    advanced: ['Prototypes & Prototype Chain','Event Loop & Task Queue','Generators & Iterators','Proxy & Reflect','WeakMap & WeakSet','Web APIs (Intersection, Resize)','Web Workers','Performance Optimization','Testing - Jest Basics','Design Patterns','TypeScript Basics','TypeScript Advanced Types'],
-  },
-  cpp: {
-    basic: ['Input & Output (cin/cout)','Variables & Data Types','Type Casting','Arithmetic & Assignment Operators','Comparison & Logical Operators','Bitwise Operators','Strings - C-style & std::string','String Methods & Operations','Arrays - 1D','Arrays - 2D & Multidimensional','Pointers - Basics','Pointers & Arrays','References','Conditional Statements','Loops - for, while, do-while'],
-    intermediate: ['Functions - Basics & Overloading','Functions - Default & Inline','Recursion','Structures & Enums','Classes & Objects','Constructors & Destructors','Inheritance','Polymorphism & Virtual Functions','Operator Overloading','Templates - Function & Class','STL - Vectors & Deque','STL - Maps & Sets','STL - Algorithms','File I/O (fstream)','Exception Handling'],
-    advanced: ['Smart Pointers (unique, shared)','Move Semantics & Rvalue Refs','Lambda Expressions','Multithreading - Basics','Multithreading - Mutex & Locks','Template Metaprogramming','Memory Management & RAII','STL Iterators & Adapters','Data Structures (Stack, Queue)','Algorithm Complexity','Unit Testing','Design Patterns'],
-  },
-};
-
 const Index = () => {
   const [screen, setScreen] = useState<Screen>('splash');
   const [selectedLanguage, setSelectedLanguage] = useState<'python' | 'javascript' | 'cpp' | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<'basic' | 'intermediate' | 'advanced' | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
-  const [levelQuestions, setLevelQuestions] = useState<any[]>([]);
   const [aiQuizQuestions, setAIQuizQuestions] = useState<any[]>([]);
   const [quizTopic, setQuizTopic] = useState<string>('');
   const [quizTopicCategory, setQuizTopicCategory] = useState<string>('');
   const [quizMode, setQuizMode] = useState<'mcq' | 'short' | 'coding'>('mcq');
 
   const {
-    currentUser, progress, users, savedSessions,
-    loadUser, createUser, completeLevel, addQuizPoints, getLevelProgress,
-    getCompletedLevels, getTotalCompletedLevels, saveSession, deleteSession, logout,
+    currentUser, progress, users, savedSessions, quizHistory,
+    loadUser, createUser, completeLevel, addQuizPoints, addQuizHistory, deleteQuizHistory,
+    getLevelProgress, getCompletedLevels, getLanguageCompletedLevels, getTotalCompletedLevels,
+    saveSession, deleteSession, logout,
   } = useProgress();
 
   useEffect(() => {
@@ -104,38 +85,15 @@ const Index = () => {
     }
   };
 
-  const handleSelectLevel = async (level: number) => {
+  // Load from question bank (instant)
+  const handleSelectLevel = (level: number) => {
+    if (!selectedLanguage || !selectedCategory) return;
     setSelectedLevel(level);
-    setScreen('level-loading');
-
-    // Generate 20 questions via AI
-    try {
-      const lang = selectedLanguage!;
-      const cat = selectedCategory!;
-      const topics = levelTopics[lang]?.[cat];
-      const topic = topics?.[level - 1] || `Level ${level}`;
-
-      const { data, error } = await supabase.functions.invoke('generate-quiz', {
-        body: {
-          language: languageNames[lang],
-          category: cat,
-          topic,
-          count: 20,
-          mode: 'level',
-        },
-      });
-
-      if (error) throw error;
-      if (data?.questions && Array.isArray(data.questions)) {
-        setLevelQuestions(data.questions);
-        setScreen('questions');
-      } else {
-        throw new Error('Invalid response');
-      }
-    } catch (err) {
-      console.error('Level generation failed:', err);
-      alert('Failed to generate level questions. Please try again.');
-      setScreen('levels');
+    const questions = getQuestions(selectedLanguage, selectedCategory, level);
+    if (questions.length > 0) {
+      setScreen('questions');
+    } else {
+      alert('No questions available for this level yet.');
     }
   };
 
@@ -158,6 +116,19 @@ const Index = () => {
     setScreen('ai-quiz');
   };
 
+  const handleQuizComplete = (score: number, total: number, timeTaken: number) => {
+    addQuizPoints(score);
+    addQuizHistory({
+      language: languageNames[selectedLanguage!] || selectedLanguage!,
+      topic: quizTopic,
+      mode: quizMode,
+      score,
+      total,
+      pointsEarned: score,
+      timeTaken,
+    });
+  };
+
   const handleGenerateCategoryQuiz = (questions: any[]) => {
     setAIQuizQuestions(questions);
     setScreen('ai-quiz-category');
@@ -175,9 +146,11 @@ const Index = () => {
           <Dashboard
             progress={progress}
             completedLevels={getTotalCompletedLevels()}
+            getLanguageCompletedLevels={getLanguageCompletedLevels}
             onChooseLanguage={() => setScreen('language-selection')}
             onRunCode={() => setScreen('run-code')}
             onViewSessions={() => setScreen('saved-sessions')}
+            onQuizDashboard={() => setScreen('quiz-dashboard')}
             onLogout={handleLogout}
           />
         );
@@ -229,18 +202,6 @@ const Index = () => {
             onHome={goHome}
           />
         );
-      case 'level-loading':
-        return (
-          <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="text-center animate-pulse">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center animate-spin-slow">
-                <Zap className="w-12 h-12 text-background" />
-              </div>
-              <h2 className="text-2xl font-bold gradient-text mb-2">Generating Level Questions...</h2>
-              <p className="text-muted-foreground">Creating 20 topic-specific questions</p>
-            </div>
-          </div>
-        );
       case 'questions':
         if (!selectedLanguage || !selectedCategory || !selectedLevel) return null;
         return (
@@ -248,7 +209,7 @@ const Index = () => {
             language={selectedLanguage}
             category={selectedCategory}
             level={selectedLevel}
-            questions={levelQuestions}
+            questions={getQuestions(selectedLanguage, selectedCategory, selectedLevel)}
             onComplete={handleCompleteLevel}
             onBack={() => setScreen('levels')}
             onHome={goHome}
@@ -274,15 +235,35 @@ const Index = () => {
           <AIQuizScreen
             questions={aiQuizQuestions}
             language={selectedLanguage!}
+            topic={quizTopic}
             mode={quizMode}
             onBack={() => setScreen('quiz-mode-select')}
             onHome={goHome}
-            onQuizComplete={addQuizPoints}
+            onQuizComplete={handleQuizComplete}
             onRetry={() => {}}
           />
         );
       case 'ai-quiz-category':
-        return <AIQuizScreen questions={aiQuizQuestions} language={selectedLanguage!} onBack={() => setScreen('category-selection')} onHome={goHome} onQuizComplete={addQuizPoints} />;
+        return (
+          <AIQuizScreen
+            questions={aiQuizQuestions}
+            language={selectedLanguage!}
+            onBack={() => setScreen('category-selection')}
+            onHome={goHome}
+            onQuizComplete={handleQuizComplete}
+          />
+        );
+      case 'quiz-dashboard':
+        return (
+          <QuizDashboard
+            history={quizHistory}
+            totalQuizPoints={progress?.quizPoints || 0}
+            quizzesCompleted={progress?.quizzesCompleted || 0}
+            onDelete={deleteQuizHistory}
+            onBack={() => setScreen('dashboard')}
+            onHome={goHome}
+          />
+        );
       case 'run-code':
         return <RunCodeScreen onSave={(lang, code) => saveSession(lang, code)} onBack={() => setScreen('menu')} onHome={goHome} />;
       case 'saved-sessions':
