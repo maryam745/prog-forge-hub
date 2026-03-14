@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { QuizHistoryEntry } from '@/components/QuizDashboard';
 
 export interface UserProgress {
   name: string;
@@ -25,6 +26,8 @@ export interface SavedSession {
   timestamp: string;
 }
 
+export type BadgeTier = 'beginner' | 'bronze' | 'silver' | 'gold' | 'platinum';
+
 const defaultProgress = (name: string): UserProgress => ({
   name,
   languages: {
@@ -37,27 +40,34 @@ const defaultProgress = (name: string): UserProgress => ({
   quizzesCompleted: 0,
 });
 
+export const getBadge = (completedLevels: number, totalLevels: number): { tier: BadgeTier; label: string; color: string } => {
+  const pct = totalLevels > 0 ? (completedLevels / totalLevels) * 100 : 0;
+  if (pct >= 90) return { tier: 'platinum', label: 'Platinum', color: 'from-cyan-300 to-cyan-500' };
+  if (pct >= 70) return { tier: 'gold', label: 'Gold', color: 'from-yellow-400 to-amber-500' };
+  if (pct >= 45) return { tier: 'silver', label: 'Silver', color: 'from-gray-300 to-gray-400' };
+  if (pct >= 20) return { tier: 'bronze', label: 'Bronze', color: 'from-orange-400 to-orange-600' };
+  return { tier: 'beginner', label: 'Beginner', color: 'from-muted to-muted-foreground/30' };
+};
+
+// Per language: basic 15 + intermediate 15 + advanced 12 = 42
+export const LEVELS_PER_LANGUAGE = 42;
+
 export const useProgress = () => {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [users, setUsers] = useState<string[]>([]);
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
+  const [quizHistory, setQuizHistory] = useState<QuizHistoryEntry[]>([]);
 
   useEffect(() => {
     const storedUsers = localStorage.getItem('prognest_users');
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
-    }
+    if (storedUsers) setUsers(JSON.parse(storedUsers));
 
     const storedSessions = localStorage.getItem('prognest_sessions');
-    if (storedSessions) {
-      setSavedSessions(JSON.parse(storedSessions));
-    }
+    if (storedSessions) setSavedSessions(JSON.parse(storedSessions));
 
     const lastUser = localStorage.getItem('prognest_current_user');
-    if (lastUser) {
-      loadUser(lastUser);
-    }
+    if (lastUser) loadUser(lastUser);
   }, []);
 
   const loadUser = (name: string) => {
@@ -69,12 +79,17 @@ export const useProgress = () => {
     }
     setCurrentUser(name);
     localStorage.setItem('prognest_current_user', name);
+
+    const storedHistory = localStorage.getItem(`prognest_quiz_history_${name}`);
+    if (storedHistory) setQuizHistory(JSON.parse(storedHistory));
+    else setQuizHistory([]);
   };
 
   const createUser = (name: string) => {
     const newProgress = defaultProgress(name);
     setProgress(newProgress);
     setCurrentUser(name);
+    setQuizHistory([]);
 
     const updatedUsers = [...users, name];
     setUsers(updatedUsers);
@@ -129,6 +144,27 @@ export const useProgress = () => {
     saveProgress(updatedProgress);
   };
 
+  const addQuizHistory = (entry: Omit<QuizHistoryEntry, 'id' | 'timestamp'>) => {
+    const newEntry: QuizHistoryEntry = {
+      ...entry,
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+    };
+    const updated = [...quizHistory, newEntry];
+    setQuizHistory(updated);
+    if (currentUser) {
+      localStorage.setItem(`prognest_quiz_history_${currentUser}`, JSON.stringify(updated));
+    }
+  };
+
+  const deleteQuizHistory = (id: string) => {
+    const updated = quizHistory.filter((h) => h.id !== id);
+    setQuizHistory(updated);
+    if (currentUser) {
+      localStorage.setItem(`prognest_quiz_history_${currentUser}`, JSON.stringify(updated));
+    }
+  };
+
   const getLevelProgress = (language: string, category: string, level: number) => {
     if (!progress) return null;
     return progress.languages[language]?.[category]?.[level] || null;
@@ -138,6 +174,17 @@ export const useProgress = () => {
     if (!progress) return 0;
     const categoryProgress = progress.languages[language]?.[category] || {};
     return Object.values(categoryProgress).filter((l) => l.completed).length;
+  };
+
+  const getLanguageCompletedLevels = (language: string) => {
+    if (!progress) return 0;
+    let total = 0;
+    const lang = progress.languages[language];
+    if (!lang) return 0;
+    Object.values(lang).forEach((cat) => {
+      total += Object.values(cat).filter((l) => l.completed).length;
+    });
+    return total;
   };
 
   const getTotalCompletedLevels = () => {
@@ -158,7 +205,6 @@ export const useProgress = () => {
       code,
       timestamp: new Date().toISOString(),
     };
-
     const updated = [...savedSessions, session];
     setSavedSessions(updated);
     localStorage.setItem('prognest_sessions', JSON.stringify(updated));
@@ -174,6 +220,7 @@ export const useProgress = () => {
   const logout = () => {
     setCurrentUser(null);
     setProgress(null);
+    setQuizHistory([]);
     localStorage.removeItem('prognest_current_user');
   };
 
@@ -182,12 +229,16 @@ export const useProgress = () => {
     progress,
     users,
     savedSessions,
+    quizHistory,
     loadUser,
     createUser,
     completeLevel,
     addQuizPoints,
+    addQuizHistory,
+    deleteQuizHistory,
     getLevelProgress,
     getCompletedLevels,
+    getLanguageCompletedLevels,
     getTotalCompletedLevels,
     saveSession,
     deleteSession,
