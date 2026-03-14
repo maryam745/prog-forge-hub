@@ -8,10 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 interface AIQuizScreenProps {
   questions: any[];
   language: 'python' | 'javascript' | 'cpp';
+  topic?: string;
   mode?: 'mcq' | 'short' | 'coding';
   onBack: () => void;
   onHome?: () => void;
-  onQuizComplete?: (score: number) => void;
+  onQuizComplete?: (score: number, total: number, timeTaken: number) => void;
   onRetry?: () => void;
 }
 
