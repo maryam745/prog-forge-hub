@@ -1,40 +1,43 @@
 import { useState } from 'react';
-import { User, Users, ArrowRight, Plus } from 'lucide-react';
+import { User, Users, ArrowRight, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface UserScreenProps {
   users: string[];
   onSelectUser: (name: string) => void;
   onCreateUser: (name: string) => void;
+  onDeleteUser?: (name: string) => void;
 }
 
-const UserScreen = ({ users, onSelectUser, onCreateUser }: UserScreenProps) => {
+const UserScreen = ({ users, onSelectUser, onCreateUser, onDeleteUser }: UserScreenProps) => {
   const [newName, setNewName] = useState('');
   const [error, setError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleCreate = () => {
     const trimmed = newName.trim();
-    if (!trimmed) {
-      setError('Please enter a name');
-      return;
-    }
-    if (users.includes(trimmed)) {
-      setError('This user already exists');
-      return;
-    }
+    if (!trimmed) { setError('Please enter a name'); return; }
+    if (users.includes(trimmed)) { setError('This user already exists'); return; }
     onCreateUser(trimmed);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleCreate();
-    }
+    if (e.key === 'Enter') handleCreate();
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      {/* Background effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
@@ -42,7 +45,6 @@ const UserScreen = ({ users, onSelectUser, onCreateUser }: UserScreenProps) => {
 
       <div className="relative z-10 w-full max-w-lg animate-slide-up">
         <div className="glass-card p-8">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-accent p-0.5">
               <div className="w-full h-full bg-card rounded-2xl flex items-center justify-center">
@@ -53,34 +55,23 @@ const UserScreen = ({ users, onSelectUser, onCreateUser }: UserScreenProps) => {
             <p className="text-muted-foreground">Enter your name to get started</p>
           </div>
 
-          {/* New user input */}
           <div className="space-y-4 mb-8">
             <div className="flex gap-3">
               <Input
                 type="text"
                 placeholder="Enter your name..."
                 value={newName}
-                onChange={(e) => {
-                  setNewName(e.target.value);
-                  setError('');
-                }}
+                onChange={(e) => { setNewName(e.target.value); setError(''); }}
                 onKeyPress={handleKeyPress}
                 className="flex-1 bg-muted border-border/50 focus:border-primary h-12 text-lg"
               />
-              <Button
-                onClick={handleCreate}
-                className="h-12 px-6 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Start
+              <Button onClick={handleCreate} className="h-12 px-6 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity">
+                <Plus className="w-5 h-5 mr-2" /> Start
               </Button>
             </div>
-            {error && (
-              <p className="text-sm text-destructive animate-fade-in">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive animate-fade-in">{error}</p>}
           </div>
 
-          {/* Existing users */}
           {users.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -89,27 +80,56 @@ const UserScreen = ({ users, onSelectUser, onCreateUser }: UserScreenProps) => {
               </div>
               <div className="space-y-2">
                 {users.map((user) => (
-                  <button
-                    key={user}
-                    onClick={() => onSelectUser(user)}
-                    className="w-full p-4 bg-muted/50 hover:bg-muted rounded-xl flex items-center justify-between group transition-all duration-200 hover:scale-[1.02]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                        <span className="text-lg font-semibold text-primary">
-                          {user.charAt(0).toUpperCase()}
-                        </span>
+                  <div key={user} className="flex items-center gap-2">
+                    <button
+                      onClick={() => onSelectUser(user)}
+                      className="flex-1 p-4 bg-muted/50 hover:bg-muted rounded-xl flex items-center justify-between group transition-all duration-200 hover:scale-[1.02]"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                          <span className="text-lg font-semibold text-primary">{user.charAt(0).toUpperCase()}</span>
+                        </div>
+                        <span className="font-medium">{user}</span>
                       </div>
-                      <span className="font-medium">{user}</span>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                  </button>
+                      <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    </button>
+                    {onDeleteUser && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeleteTarget(user)}
+                        className="text-muted-foreground hover:text-destructive shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteTarget}"? All progress and data will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (deleteTarget && onDeleteUser) { onDeleteUser(deleteTarget); setDeleteTarget(null); } }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
