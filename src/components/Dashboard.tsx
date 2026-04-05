@@ -14,10 +14,10 @@ interface DashboardProps {
   onLogout: () => void;
 }
 
-const languageIcons: Record<string, string> = {
-  python: '🐍',
-  javascript: '⚡',
-  cpp: '⚙️',
+const languageLogos: Record<string, string> = {
+  python: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg',
+  javascript: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg',
+  cpp: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg',
 };
 
 const Dashboard = ({
@@ -93,7 +93,7 @@ const Dashboard = ({
           </div>
         </div>
 
-        {/* Language Badges */}
+        {/* Language Badges - Updated: no counts, real logos */}
         <div className="glass-card p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Award className="w-5 h-5 text-primary" />
@@ -105,12 +105,18 @@ const Dashboard = ({
               const badge = getBadge(completed, LEVELS_PER_LANGUAGE);
               return (
                 <div key={lang} className="text-center">
-                  <div className={`w-16 h-16 mx-auto rounded-full bg-gradient-to-br ${badge.color} flex items-center justify-center text-2xl mb-2 shadow-lg`}>
-                    {languageIcons[lang]}
+                  <div className={`w-20 h-20 mx-auto rounded-full bg-gradient-to-br ${badge.color} p-1 shadow-lg`}>
+                    <div className="w-full h-full rounded-full bg-card flex items-center justify-center">
+                      <img
+                        src={languageLogos[lang]}
+                        alt={lang}
+                        className="w-10 h-10"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
                   </div>
-                  <p className="text-sm font-semibold capitalize">{lang === 'cpp' ? 'C++' : lang}</p>
+                  <p className="text-sm font-semibold mt-2">{lang === 'cpp' ? 'C++' : lang.charAt(0).toUpperCase() + lang.slice(1)}</p>
                   <p className={`text-xs font-bold bg-gradient-to-r ${badge.color} bg-clip-text text-transparent`}>{badge.label}</p>
-                  <p className="text-xs text-muted-foreground">{completed}/{LEVELS_PER_LANGUAGE}</p>
                 </div>
               );
             })}
