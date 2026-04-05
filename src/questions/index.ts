@@ -11,7 +11,16 @@ export interface ShortQuestion {
   answer: string;
 }
 
-export type Question = MCQ | ShortQuestion;
+export interface CodingQuestion {
+  type: 'coding';
+  question: string;
+  starterCode: string;
+  exampleInput?: string;
+  exampleOutput: string;
+  testCases?: { input: string; expectedOutput: string }[];
+}
+
+export type Question = MCQ | ShortQuestion | CodingQuestion;
 
 export interface LevelQuestions {
   [level: number]: Question[];
